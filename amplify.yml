@@ -1,38 +1,63 @@
 version: 1
 
 # AWS Amplify build configuration for RuneSight 2.0
-# This configuration builds both frontend and backend
+# This configuration builds both frontend (React + Vite) and backend (FastAPI)
 
 frontend:
   phases:
     preBuild:
       commands:
+        # Navigate to frontend directory
         - cd frontend
+        # Install dependencies using npm ci for reproducible builds
         - npm ci
+        # Verify environment variables are available
+        - echo "Building frontend with API endpoint..."
     build:
       commands:
+        # Build the React application with Vite
         - npm run build
+        # Verify build output
+        - ls -la dist/
   artifacts:
+    # Vite outputs to dist/ directory
     baseDirectory: frontend/dist
     files:
       - '**/*'
   cache:
     paths:
+      # Cache node_modules for faster builds
       - frontend/node_modules/**/*
 
 backend:
   phases:
     preBuild:
       commands:
+        # Navigate to backend directory
         - cd backend
+        # Upgrade pip to latest version
+        - pip install --upgrade pip
+        # Install Python dependencies
         - pip install -r requirements.txt
+        # Verify critical dependencies
+        - pip list | grep -E "fastapi|uvicorn|boto3|strands"
     build:
       commands:
-        - echo "Backend dependencies installed"
+        # Verify main.py exists
+        - ls -la main.py
+        # Run a quick syntax check
+        - python -m py_compile main.py
+        - echo "✅ Backend build complete - FastAPI ready"
   artifacts:
+    # Include all backend files for deployment
     baseDirectory: backend
     files:
       - '**/*'
+      - '!venv/**/*'
+      - '!__pycache__/**/*'
+      - '!*.pyc'
+      - '!.env'
   cache:
     paths:
-      - backend/venv/**/*
+      # Cache pip packages for faster builds
+      - /root/.cache/pip/**/*

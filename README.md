@@ -188,14 +188,35 @@ npm run format
 
 ## Deployment
 
-### AWS Amplify Deployment
+### AWS Amplify Deployment (AWS CLI)
 
-1. Connect your GitHub repository to AWS Amplify
-2. Configure environment variables in Amplify Console
-3. Use the provided `amplify.yml` configuration
-4. Deploy!
+Deploy to AWS Amplify in ~5 minutes using the deployment script:
 
-See the [Deployment Guide](docs/deployment.md) for detailed instructions.
+**Windows**:
+```powershell
+.\deploy.ps1
+```
+
+**Linux/Mac**:
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+The script will:
+- Check your AWS credentials
+- Prompt for Riot API key and GitHub token
+- Create/update Amplify app
+- Deploy and give you the URL
+
+See **[DEPLOY-README.md](DEPLOY-README.md)** for details.
+
+### Prerequisites
+
+- AWS CLI installed and configured (`aws configure`)
+- GitHub Personal Access Token (repo access)
+- Riot API key from [developer.riotgames.com](https://developer.riotgames.com/)
+- Bedrock model access enabled in AWS Console
 
 ## Features
 
