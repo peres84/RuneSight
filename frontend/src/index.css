@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* RuneSight Light Theme */
+    --background: 0 0% 100%;
+    --foreground: 210 15% 15%;
+    --primary: 225 40% 17%;        /* #1a1f3b - RuneSight primary */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 2 50% 52%;        /* #c94441 - RuneSight secondary */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 345 45% 65%;         /* #d86c7f - RuneSight accent */
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 225 40% 17%;           /* Primary color for focus rings */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* RuneSight Dark Theme */
+    --background: 225 40% 6%;      /* Even darker background */
+    --foreground: 0 0% 95%;        /* Better contrast for text */
+    --primary: 345 45% 70%;        /* Brighter accent for better visibility */
+    --primary-foreground: 225 40% 6%;
+    --secondary: 2 60% 55%;        /* More vibrant secondary */
+    --secondary-foreground: 0 0% 95%;
+    --muted: 225 30% 12%;          /* Better muted background */
+    --muted-foreground: 0 0% 70%;  /* Better muted text contrast */
+    --accent: 345 45% 70%;         /* Brighter accent */
+    --accent-foreground: 225 40% 6%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 225 30% 18%;         /* More visible borders */
+    --input: 225 30% 12%;
+    --ring: 345 45% 70%;           /* Brighter focus rings */
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:opacity-90 px-4 py-2 rounded-md font-medium transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:opacity-80 px-4 py-2 rounded-md font-medium transition-colors;
+  }
+  
+  .btn-runesight {
+    @apply bg-runesight-primary text-white hover:bg-runesight-primary/90 px-4 py-2 rounded-md font-medium transition-colors;
+  }
+  
+  .btn-runesight-secondary {
+    @apply bg-runesight-secondary text-white hover:bg-runesight-secondary/90 px-4 py-2 rounded-md font-medium transition-colors;
+  }
+  
+  .btn-runesight-accent {
+    @apply bg-runesight-accent text-white hover:bg-runesight-accent/90 px-4 py-2 rounded-md font-medium transition-colors;
+  }
+  
+  .card {
+    @apply bg-background border border-border rounded-lg shadow-sm p-4;
+  }
+  
+  .card-runesight {
+    @apply bg-background border border-runesight-primary/20 rounded-lg shadow-sm p-4 hover:border-runesight-primary/40 transition-colors;
+  }
+  
+  .input {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  
+  .gradient-runesight {
+    @apply bg-gradient-to-r from-runesight-primary via-runesight-secondary to-runesight-accent;
+  }
+  
+  .gradient-runesight-text {
+    @apply bg-gradient-to-r from-runesight-primary via-runesight-secondary to-runesight-accent bg-clip-text text-transparent;
+  }
+  
+  /* Enhanced animations */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  /* Better glass morphism */
+  .glass {
+    @apply bg-background/80 backdrop-blur-md border border-white/10;
+  }
+  
+  .glass-dark {
+    @apply dark:bg-background/60 dark:backdrop-blur-lg dark:border-white/5;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 20px rgba(216, 108, 127, 0.3); }
+  to { box-shadow: 0 0 30px rgba(216, 108, 127, 0.6); }
+}

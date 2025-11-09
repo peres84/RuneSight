@@ -1,0 +1,22 @@
+# FastAPI and web server
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# HTTP client
+requests==2.32.3
+
+# Environment variables
+python-dotenv==1.0.1
+
+# AWS SDK
+boto3==1.35.94
+
+# AI Agents framework
+strands-agents==1.15.0
+
+# Data validation
+pydantic==2.12.4
+
+# CORS middleware (included in FastAPI but explicit for clarity)
+# fastapi already includes starlette which has CORS support
