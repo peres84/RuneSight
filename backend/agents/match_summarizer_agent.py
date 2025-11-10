@@ -11,6 +11,7 @@ from strands import Agent, tool
 from services.riot_api_client import RiotAPIClient
 from agents.base_agent import create_bedrock_model
 from tools.user_profile_tool import get_user_profile, get_user_profile_from_cache
+from tools.match_fetcher_tool import fetch_user_matches
 
 
 # Initialize services
@@ -354,7 +355,8 @@ Focus on the player's journey and progress over time."""
                 get_match_summary,
                 get_season_review,
                 get_user_profile,
-                get_user_profile_from_cache
+                get_user_profile_from_cache,
+                fetch_user_matches
             ],
             system_prompt=self.SYSTEM_PROMPT
         )

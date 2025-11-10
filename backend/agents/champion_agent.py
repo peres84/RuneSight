@@ -11,6 +11,7 @@ from strands import Agent, tool
 from services.riot_api_client import RiotAPIClient
 from agents.base_agent import create_bedrock_model
 from tools.user_profile_tool import get_user_profile, get_user_profile_from_cache
+from tools.match_fetcher_tool import fetch_user_matches
 
 
 # Initialize services
@@ -368,11 +369,12 @@ Be encouraging and help players feel confident in their champion choices."""
         self.agent = Agent(
             model=self.model,
             tools=[
-                get_champion_performance, 
-                get_champion_pool, 
+                get_champion_performance,
+                get_champion_pool,
                 get_matchup_history,
                 get_user_profile,
-                get_user_profile_from_cache
+                get_user_profile_from_cache,
+                fetch_user_matches
             ],
             system_prompt=self.SYSTEM_PROMPT
         )

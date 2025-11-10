@@ -73,17 +73,54 @@ def get_user_profile(riot_id: str, match_count: int = 20) -> Dict[str, Any]:
         
         game_name, tag_line = riot_id.split('#', 1)
         
-        # Get PUUID
+        # Get PUUID (account API works globally, so default region is fine)
         puuid = riot_client.get_puuid_by_riot_id(game_name, tag_line)
         if not puuid:
-            return {"error": f"Player {riot_id} not found"}
-        
-        # Get summoner data for level
-        summoner_data = riot_client.get_summoner_by_puuid(puuid)
+            return {
+                "error": f"Player {riot_id} not found",
+                "riot_id": riot_id,
+                "suggestions": [
+                    "Verify the RiotID format is correct (gameName#tagLine)",
+                    "Check if the player exists in the correct region",
+                    "Make sure the tagline is correct (case-sensitive)",
+                    "The player might be on a different server/region"
+                ]
+            }
+
+        # Detect player's actual region/platform
+        logger.info(f"Detecting active region for {riot_id} (PUUID: {puuid[:20]}...)")
+        active_region_data = riot_client.get_active_region_by_puuid(puuid, game="lol")
+
+        # Platform to Regional Routing mapping
+        PLATFORM_TO_REGION = {
+            # Americas
+            "br1": "AMERICAS", "la1": "AMERICAS", "la2": "AMERICAS", "na1": "AMERICAS",
+            # Europe
+            "eun1": "EUROPE", "euw1": "EUROPE", "tr1": "EUROPE", "ru": "EUROPE",
+            # Asia
+            "jp1": "ASIA", "kr": "ASIA", "oc1": "ASIA",
+            # SEA
+            "ph2": "SEA", "sg2": "SEA", "th2": "SEA", "tw2": "SEA", "vn2": "SEA",
+        }
+
+        # Get region and platform from active region data
+        if active_region_data and "region" in active_region_data:
+            platform = active_region_data["region"].lower()  # e.g., "la1", "euw1"
+            region = PLATFORM_TO_REGION.get(platform, "EUROPE")  # Map to regional routing
+            logger.info(f"✅ Player {riot_id} detected on platform: {platform.upper()}, region: {region}")
+
+            # Create a new client with the correct region and platform
+            region_client = RiotAPIClient(region=region, platform=platform.upper())
+        else:
+            logger.warning(f"⚠️ Could not detect active region for {riot_id}, using default EUROPE/EUW1")
+            region_client = riot_client
+
+        # Get summoner data for level (using region-specific client)
+        summoner_data = region_client.get_summoner_by_puuid(puuid)
         summoner_level = summoner_data.get('summonerLevel', 0) if summoner_data else 0
-        
-        # Get ranked league data
-        league_entries = riot_client.get_league_entries_by_puuid(puuid)
+
+        # Get ranked league data (using region-specific client)
+        league_entries = region_client.get_league_entries_by_puuid(puuid)
         
         # Parse ranked data
         ranked_solo = None
@@ -109,9 +146,9 @@ def get_user_profile(riot_id: str, match_count: int = 20) -> Dict[str, Any]:
                     "win_rate": round(entry.get('wins', 0) / max(entry.get('wins', 0) + entry.get('losses', 0), 1) * 100, 1)
                 }
         
-        # Get recent matches
+        # Get recent matches (using region-specific client)
         match_count = min(match_count, 100)  # Cap at 100
-        match_ids = riot_client.get_matches_by_puuid(puuid, count=match_count)
+        match_ids = region_client.get_matches_by_puuid(puuid, count=match_count)
         
         if not match_ids:
             return {
@@ -143,17 +180,17 @@ def get_user_profile(riot_id: str, match_count: int = 20) -> Dict[str, Any]:
         champion_stats = {}  # {champion: {games, wins}}
         role_counter = Counter()
         
-        # Fetch all matches IN PARALLEL
+        # Fetch all matches IN PARALLEL (using region-specific client)
         from concurrent.futures import ThreadPoolExecutor
-        
+
         def fetch_match(match_id):
             """Fetch a single match (runs in thread pool)"""
             try:
-                return riot_client.get_match_details(match_id)
+                return region_client.get_match_details(match_id)
             except Exception as e:
                 logger.error(f"Error fetching match {match_id}: {e}")
                 return None
-        
+
         # Fetch all matches in parallel using thread pool
         with ThreadPoolExecutor(max_workers=10) as executor:
             match_data_list = list(executor.map(fetch_match, match_ids))
@@ -348,12 +385,30 @@ def get_user_profile_from_cache(riot_id: str, match_data: List[dict]) -> Dict[st
         summoner_level = 0
         ranked_solo = None
         ranked_flex = None
-        
+
+        # Detect player's actual region/platform
+        region_client = riot_client  # Default to global client
         if puuid:
-            summoner_data = riot_client.get_summoner_by_puuid(puuid, use_cache=True)
+            active_region_data = riot_client.get_active_region_by_puuid(puuid, game="lol", use_cache=True)
+
+            # Platform to Regional Routing mapping
+            PLATFORM_TO_REGION = {
+                "br1": "AMERICAS", "la1": "AMERICAS", "la2": "AMERICAS", "na1": "AMERICAS",
+                "eun1": "EUROPE", "euw1": "EUROPE", "tr1": "EUROPE", "ru": "EUROPE",
+                "jp1": "ASIA", "kr": "ASIA", "oc1": "ASIA",
+                "ph2": "SEA", "sg2": "SEA", "th2": "SEA", "tw2": "SEA", "vn2": "SEA",
+            }
+
+            if active_region_data and "region" in active_region_data:
+                platform = active_region_data["region"].lower()
+                region = PLATFORM_TO_REGION.get(platform, "EUROPE")
+                logger.debug(f"Cache: Player {riot_id} on platform: {platform.upper()}, region: {region}")
+                region_client = RiotAPIClient(region=region, platform=platform.upper())
+
+            summoner_data = region_client.get_summoner_by_puuid(puuid, use_cache=True)
             summoner_level = summoner_data.get('summonerLevel', 0) if summoner_data else 0
-            
-            league_entries = riot_client.get_league_entries_by_puuid(puuid, use_cache=True)
+
+            league_entries = region_client.get_league_entries_by_puuid(puuid, use_cache=True)
             for entry in league_entries:
                 queue_type = entry.get('queueType', '')
                 if queue_type == 'RANKED_SOLO_5x5':

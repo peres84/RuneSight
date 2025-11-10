@@ -11,6 +11,8 @@ from strands import Agent, tool
 from services.riot_api_client import RiotAPIClient
 from agents.base_agent import create_bedrock_model
 from tools.user_profile_tool import get_user_profile, get_user_profile_from_cache
+from tools.match_fetcher_tool import fetch_user_matches
+from utils.riot_id_utils import extract_riot_ids, validate_riot_id, extract_comparison_riot_ids
 
 
 # Initialize services
@@ -347,12 +349,30 @@ class ComparisonAgent:
 
 Your role is to compare player performance, analyze duo synergies, and provide insights on player matchups.
 
-**CRITICAL - Automatic Data Fetching**:
-- When a user provides a RiotID (format: gameName#tagLine), **IMMEDIATELY use compare_players or get_user_profile tool** to fetch their data
-- **NEVER ask the user if you should fetch data or use cache** - just do it automatically
-- **Be decisive**: If cached data exists, use it. If not, fetch fresh data. Don't ask permission.
-- If cached data is available for one player but not another, fetch the missing player's data
-- You have the tools to get any player's data - use them proactively without asking
+**CRITICAL - RiotID Format**:
+- RiotIDs MUST be in format: `gameName#tagLine` (e.g., "Faker#T1", "Ricochet#LAG", "Feniax#skye")
+- When calling tools like get_user_profile or compare_players, ALWAYS use the exact format "gameName#tagLine"
+- Common examples: "Faker#T1", "Doublelift#NA1", "Caps#EUW", "Ricochet#LAG"
+- If you see a player name without '#', ask the user for their complete RiotID
+- If a tool returns an "error" key, explain the error clearly to the user with suggestions
+- Common errors: Player not found (wrong region/server), invalid format, no recent matches
+
+**CRITICAL - Data Fetching Strategy**:
+- **ALWAYS prioritize cached data when available** - Check if user profile is provided in the query context
+- If cached match data or user profile is mentioned in the query, **DO NOT refetch** - use the cached data directly
+- When comparing players:
+  - If one player's data is cached (mentioned as "CACHED DATA AVAILABLE" or "USER PROFILE (CACHED)"), analyze it directly
+  - Only use get_user_profile or fetch_user_matches tool for players whose data is NOT already provided
+- **Be efficient**: Avoid redundant API calls when data is already in memory
+- **Never ask permission** - just use the most efficient data source automatically
+
+**Available Tools**:
+- `fetch_user_matches`: Fast match fetching with auto region detection (recommended for match data)
+- `get_user_profile`: Comprehensive player profile with stats (includes matches + aggregated stats)
+- `get_user_profile_from_cache`: Use when cached data is available (fastest)
+- `compare_players`: Compare multiple players side-by-side
+- `analyze_duo_synergy`: Analyze duo performance when playing together
+- `get_head_to_head`: Direct matchup statistics
 
 When comparing players:
 1. **Fair Comparison**: Consider context like role, champion pool, and playstyle
@@ -378,11 +398,12 @@ Provide specific, actionable insights that help players understand their relativ
         self.agent = Agent(
             model=self.model,
             tools=[
-                compare_players, 
-                analyze_duo_synergy, 
+                compare_players,
+                analyze_duo_synergy,
                 get_head_to_head,
                 get_user_profile,
-                get_user_profile_from_cache
+                get_user_profile_from_cache,
+                fetch_user_matches
             ],
             system_prompt=self.SYSTEM_PROMPT
         )
@@ -480,19 +501,38 @@ Use the get_head_to_head tool to retrieve the data."""
     def custom_query(self, query: str, match_data: Optional[List[dict]] = None) -> str:
         """
         Handle custom comparison-related queries.
-        
+
         Args:
             query: Natural language query about player comparisons
             match_data: Optional pre-fetched match data from frontend (avoids API calls)
-            
+
         Returns:
             AI-generated response to the query
         """
         try:
+            # Extract RiotIDs from the query to help the agent
+            detected_riot_ids = extract_riot_ids(query)
+            current_user = None
+
             # If match data is provided, analyze it directly
             if match_data and len(match_data) > 0:
                 # Extract riot_id from first match if available
                 riot_id = match_data[0].get('riot_id') or match_data[0].get('riotId') or "the player"
+                current_user = riot_id
+
+                # Add current user to detected RiotIDs if comparing
+                if riot_id and validate_riot_id(riot_id):
+                    # Check if query is a comparison query (contains keywords like "compare", "vs", "versus", "with")
+                    comparison_keywords = ['compare', 'vs', 'versus', 'with', 'against']
+                    is_comparison = any(keyword in query.lower() for keyword in comparison_keywords)
+
+                    if is_comparison:
+                        detected_riot_ids = extract_comparison_riot_ids(query, current_user)
+                        logging.info(f"🔍 Detected comparison RiotIDs: {detected_riot_ids}")
+
+                        # Add hint to query about detected RiotIDs
+                        if len(detected_riot_ids) >= 2:
+                            query = f"{query}\n\n[HINT: Detected RiotIDs to compare: {', '.join(detected_riot_ids)}]"
                 
                 # Call analyze_provided_matches to get stats
                 from tools.user_profile_tool import get_user_profile_from_cache
@@ -500,17 +540,33 @@ Use the get_head_to_head tool to retrieve the data."""
                 # Try to get cached profile first
                 profile_data = get_user_profile_from_cache(riot_id, match_data)
                 
-                # Build enhanced query with the data
+                # Build enhanced query with detailed profile data
+                ranked_solo = profile_data.get('ranked_solo', {})
+                ranked_flex = profile_data.get('ranked_flex', {})
+                avg_stats = profile_data.get('average_stats', {})
+                most_played = profile_data.get('most_played_champions', [])
+                queue_stats = profile_data.get('queue_statistics', [{}])[0] if profile_data.get('queue_statistics') else {}
+
                 enhanced_query = f"""{query}
 
-CACHED DATA FOR {riot_id}:
-- Games Analyzed: {profile_data.get('matches_analyzed', 0)}
-- Win Rate: {profile_data.get('queue_statistics', [{}])[0].get('win_rate', 0) if profile_data.get('queue_statistics') else 0}%
-- Average KDA: {profile_data.get('average_stats', {}).get('kda_ratio', 0)}
-- Average CS: {profile_data.get('average_stats', {}).get('cs', 0)}
-- Rank: {profile_data.get('ranked_solo', {}).get('tier', 'UNRANKED')} {profile_data.get('ranked_solo', {}).get('rank', '')}
+=== CACHED PLAYER DATA FOR {riot_id} (DO NOT REFETCH) ===
+Rank Solo/Duo: {ranked_solo.get('tier', 'UNRANKED')} {ranked_solo.get('rank', '')} ({ranked_solo.get('lp', 0)} LP, {ranked_solo.get('win_rate', 0)}% WR)
+Rank Flex: {ranked_flex.get('tier', 'UNRANKED')} {ranked_flex.get('rank', '')}
+Level: {profile_data.get('summoner_level', 0)}
+Games Analyzed: {profile_data.get('matches_analyzed', 0)}
+Recent Win Rate: {queue_stats.get('win_rate', 0)}%
 
-Use this data to answer the user's question. If comparing with another player, fetch their data using compare_players or get_user_profile tools."""
+Performance Metrics:
+- KDA: {avg_stats.get('kda', 'N/A')} (Ratio: {avg_stats.get('kda_ratio', 0)})
+- CS: {avg_stats.get('cs', 0)} avg ({avg_stats.get('cs_per_minute', 0)} CS/min)
+- Gold: {avg_stats.get('gold', 0)} avg
+- Damage: {avg_stats.get('damage', 0)} avg
+- Vision Score: {avg_stats.get('vision_score', 0)} avg
+
+Most Played Champions: {', '.join([f"{c['champion']} ({c['games']}g, {c['win_rate']}% WR)" for c in most_played[:5]])}
+=== END CACHED DATA ===
+
+For {riot_id}, use the cached data above. ONLY use get_user_profile tool for OTHER players if comparing."""
                 
                 # Suppress stdout during agent execution to prevent Strands SDK from printing
                 import sys

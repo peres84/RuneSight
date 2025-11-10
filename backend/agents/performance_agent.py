@@ -12,6 +12,7 @@ from services.riot_api_client import RiotAPIClient
 from services import data_processor
 from agents.base_agent import create_bedrock_model
 from tools.user_profile_tool import get_user_profile, get_user_profile_from_cache
+from tools.match_fetcher_tool import fetch_user_matches
 from tools.guides_tool import search_lol_guides, get_guide_summary
 
 
@@ -323,11 +324,12 @@ Be conversational but professional, like a coach talking to a player.
         self.agent = Agent(
             model=self.model,
             tools=[
-                get_match_performance, 
-                get_recent_performance_summary, 
+                get_match_performance,
+                get_recent_performance_summary,
                 analyze_provided_matches,
                 get_user_profile,
                 get_user_profile_from_cache,
+                fetch_user_matches,
                 search_lol_guides,
                 get_guide_summary
             ],

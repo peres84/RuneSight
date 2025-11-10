@@ -57,7 +57,7 @@ class RiotAPIClient:
     }
 
     # Rate limiting settings (Riot API: 20 req/sec, 100 req/2min)
-    RATE_LIMIT_DELAY = 1.5  # Increased to 1.5 seconds between requests to avoid rate limiting
+    RATE_LIMIT_DELAY = 0.05  # 20 req/sec = 0.05s between requests
     MAX_RETRIES = 3  # Maximum number of retries on rate limit errors
     BACKOFF_MULTIPLIER = 2  # Exponential backoff multiplier
     

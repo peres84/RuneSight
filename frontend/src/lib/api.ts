@@ -435,7 +435,10 @@ export const chatApi = {
    * Automatically routes to the best agent based on query
    */
   sendMessage: async (options: ChatMessage): Promise<ChatResponse> => {
-    const response = await apiClient.post<ChatResponse>('/api/chat/message', options);
+    // Chat requests can take longer due to AI processing, use 120s timeout
+    const response = await apiClient.post<ChatResponse>('/api/chat/message', options, {
+      timeout: 120000
+    });
     return response.data;
   },
 
