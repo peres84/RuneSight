@@ -18,6 +18,15 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
+# Silence verbose third-party loggers
+logging.getLogger("strands").setLevel(logging.CRITICAL + 1)
+logging.getLogger("strands.agent").setLevel(logging.CRITICAL + 1)
+logging.getLogger("strands.models").setLevel(logging.CRITICAL + 1)
+logging.getLogger("strands.tools").setLevel(logging.CRITICAL + 1)
+logging.getLogger("boto3").setLevel(logging.WARNING)
+logging.getLogger("botocore").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -215,8 +215,49 @@ if ((-not $StartFromStep -or [int]$StartFromStep -le 2) -and $CREATE_LAYER -and 
     # Create python directory for layer
     New-Item -ItemType Directory -Path "python" -ErrorAction SilentlyContinue | Out-Null
     
-    # Install dependencies (pip will handle platform compatibility)
-    python -m pip install -r requirements.txt -t python --upgrade --quiet
+    if ($UseDocker) {
+        Write-Info "Using Docker to build Linux-compatible layer..."
+        
+        # Check if Docker is available
+        try {
+            docker --version | Out-Null
+            Write-Success "Docker found"
+        } catch {
+            Write-Error "Docker not found. Install Docker Desktop or remove -UseDocker flag"
+            Write-Info "Download: https://www.docker.com/products/docker-desktop"
+            exit 1
+        }
+        
+        # Get current directory path
+        $currentDir = Get-Location
+        Write-Info "Building layer with Amazon Linux 2..."
+        
+        # Run Docker command to install dependencies for Linux
+        docker run --rm `
+            -v "${currentDir}:/var/task" `
+            -w /var/task `
+            --entrypoint /bin/bash `
+            public.ecr.aws/lambda/python:3.11 `
+            -c "pip install -r requirements.txt -t python --no-cache-dir --platform manylinux2014_x86_64 --only-binary=:all: --upgrade || pip install -r requirements.txt -t python --no-cache-dir --upgrade"
+        
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to install dependencies with Docker"
+            exit 1
+        }
+        
+        Write-Success "Dependencies installed for Linux"
+    } else {
+        Write-Warning "Installing without Docker may include Windows binaries"
+        Write-Info "For production, use -UseDocker flag for Linux compatibility"
+        
+        # Install dependencies with platform specification
+        python -m pip install -r requirements.txt -t python --upgrade --platform manylinux2014_x86_64 --only-binary=:all: --quiet 2>$null
+        
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Platform-specific install failed, trying standard install..."
+            python -m pip install -r requirements.txt -t python --upgrade --quiet
+        }
+    }
     
     Write-Info "Creating layer zip..."
     $layerSize = (Get-Item -Path "python" -ErrorAction SilentlyContinue | Get-ChildItem -Recurse | Measure-Object -Property Length -Sum).Sum
@@ -288,7 +329,9 @@ if ((-not $StartFromStep -or [int]$StartFromStep -le 3) -and -not $SkipPackaging
             Copy-Item -Path "api" -Destination "package/" -Recurse -Force
             Copy-Item -Path "models" -Destination "package/" -Recurse -Force
             Copy-Item -Path "services" -Destination "package/" -Recurse -Force
+            Copy-Item -Path "tools" -Destination "package/" -Recurse -Force
             Copy-Item -Path "utils" -Destination "package/" -Recurse -Force
+            Copy-Item -Path "knowledge_base" -Destination "package/" -Recurse -Force -ErrorAction SilentlyContinue
         } else {
             Write-Info "Installing dependencies with Docker (Amazon Linux 2)..."
             
@@ -318,7 +361,9 @@ if ((-not $StartFromStep -or [int]$StartFromStep -le 3) -and -not $SkipPackaging
             Copy-Item -Path "api" -Destination "package/" -Recurse -Force
             Copy-Item -Path "models" -Destination "package/" -Recurse -Force
             Copy-Item -Path "services" -Destination "package/" -Recurse -Force
+            Copy-Item -Path "tools" -Destination "package/" -Recurse -Force
             Copy-Item -Path "utils" -Destination "package/" -Recurse -Force
+            Copy-Item -Path "knowledge_base" -Destination "package/" -Recurse -Force -ErrorAction SilentlyContinue
         }
     } else {
         if ($layerArn) {
@@ -331,7 +376,9 @@ if ((-not $StartFromStep -or [int]$StartFromStep -le 3) -and -not $SkipPackaging
             Copy-Item -Path "api" -Destination "package/" -Recurse -Force
             Copy-Item -Path "models" -Destination "package/" -Recurse -Force
             Copy-Item -Path "services" -Destination "package/" -Recurse -Force
+            Copy-Item -Path "tools" -Destination "package/" -Recurse -Force
             Copy-Item -Path "utils" -Destination "package/" -Recurse -Force
+            Copy-Item -Path "knowledge_base" -Destination "package/" -Recurse -Force -ErrorAction SilentlyContinue
         } else {
             Write-Warning "Installing dependencies without Docker may include Windows binaries"
             Write-Info "For production, use -UseDocker flag for Linux compatibility"
@@ -347,7 +394,9 @@ if ((-not $StartFromStep -or [int]$StartFromStep -le 3) -and -not $SkipPackaging
             Copy-Item -Path "api" -Destination "package/" -Recurse -Force
             Copy-Item -Path "models" -Destination "package/" -Recurse -Force
             Copy-Item -Path "services" -Destination "package/" -Recurse -Force
+            Copy-Item -Path "tools" -Destination "package/" -Recurse -Force
             Copy-Item -Path "utils" -Destination "package/" -Recurse -Force
+            Copy-Item -Path "knowledge_base" -Destination "package/" -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
 

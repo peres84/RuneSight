@@ -206,37 +206,38 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <div className="flex items-center space-x-4 mb-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-3">
                 <img
                   src="/logo-precision-dark-mode.png"
                   alt="Precision"
-                  className="w-8 h-8"
+                  className="w-6 h-6 md:w-8 md:h-8"
                 />
-                <span className="text-runesight-accent font-bold uppercase tracking-wider">
+                <span className="text-runesight-accent font-bold uppercase tracking-wider text-sm md:text-base">
                   Battle Analysis
                 </span>
               </div>
-              <h1 className="text-5xl font-black text-slate-900 dark:text-white mb-2">
+              <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-2">
                 RECENT GAMES
               </h1>
-              <p className="text-slate-600 dark:text-slate-400 text-lg">
+              <p className="text-slate-600 dark:text-slate-400 text-sm md:text-lg">
                 {profile.riotId.split('#')[0]} • {filteredMatches.length} {selectedQueue ? QUEUE_FILTERS.find(f => f.queueId === selectedQueue)?.name : 'All Queues'} Matches
               </p>
             </div>
             <RiotButton
               onClick={() => onOpenChat?.()}
               variant="primary"
-              size="lg"
+              size="md"
+              className="w-full md:w-auto"
             >
-              <MessageSquare className="w-5 h-5" />
-              <span>Deploy AI Analysis</span>
+              <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="text-sm md:text-base">Deploy AI</span>
             </RiotButton>
           </div>
 
           {/* Queue Filter Tabs */}
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
             {QUEUE_FILTERS.map((filter) => {
               // Find ranked data for this queue type
               const rankedData = filter.queueType 
@@ -250,7 +251,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
                     setSelectedQueue(filter.queueId);
                     setVisibleMatches(4); // Reset visible matches when changing filter
                   }}
-                  className={`px-6 py-3 font-bold uppercase tracking-wider text-sm transition-all duration-300 whitespace-nowrap ${
+                  className={`px-4 md:px-6 py-2 md:py-3 font-bold uppercase tracking-wider text-xs md:text-sm transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
                     selectedQueue === filter.queueId
                       ? 'bg-runesight-accent text-white'
                       : 'bg-slate-200/80 dark:bg-slate-800/50 text-slate-700 dark:text-slate-400 hover:bg-slate-300/80 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-slate-700/50'
@@ -260,7 +261,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
                   <div className="flex flex-col items-center">
                     <span>{filter.name}</span>
                     {rankedData && (
-                      <span className="text-xs mt-1 opacity-80">
+                      <span className="text-[10px] md:text-xs mt-0.5 md:mt-1 opacity-80">
                         {rankedData.tier} {rankedData.rank} • {rankedData.leaguePoints} LP
                       </span>
                     )}

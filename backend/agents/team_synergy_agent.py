@@ -319,25 +319,6 @@ Use the analyze_role_synergy tool to retrieve the data."""
             logging.error(f"Error in analyze_player_synergies: {e}")
             return f"Error analyzing role synergies: {str(e)}"
     
-    def custom_query(self, query: str, match_data: List[dict] = None) -> str:
-        """
-        Handle custom team synergy queries.
-        
-        Args:
-            query: Natural language query about team compositions
-            match_data: Optional pre-fetched match data from frontend
-            
-        Returns:
-            AI-generated response to the query
-        """
-        try:
-            result = self.agent(query)
-            return result.message['content'][0]['text']
-        except Exception as e:
-            logging.error(f"Error in custom_query: {e}")
-            raise Exception(f"AI analysis failed: {str(e)}")
-
-    
     def custom_query(self, query: str, match_data: Optional[List[dict]] = None) -> str:
         """
         Handle custom team synergy queries.
@@ -349,8 +330,19 @@ Use the analyze_role_synergy tool to retrieve the data."""
         Returns:
             AI-generated response
         """
+        import sys
+        import io
+        
         try:
-            result = self.agent(query)
+            # Suppress stdout during agent execution to prevent Strands SDK from printing
+            old_stdout = sys.stdout
+            sys.stdout = io.StringIO()
+            
+            try:
+                result = self.agent(query)
+            finally:
+                sys.stdout = old_stdout
+            
             return result.message['content'][0]['text']
         except Exception as e:
             logging.error(f"Error in custom_query: {e}")

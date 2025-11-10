@@ -13,6 +13,14 @@ from strands.models import BedrockModel
 
 # Silence Strands SDK logs for cleaner output
 logging.getLogger("strands").setLevel(logging.CRITICAL + 1)
+logging.getLogger("strands.agent").setLevel(logging.CRITICAL + 1)
+logging.getLogger("strands.models").setLevel(logging.CRITICAL + 1)
+logging.getLogger("strands.tools").setLevel(logging.CRITICAL + 1)
+
+# Also silence boto3 and botocore verbose logging
+logging.getLogger("boto3").setLevel(logging.WARNING)
+logging.getLogger("botocore").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 class BedrockConfig:

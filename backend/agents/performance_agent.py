@@ -456,9 +456,27 @@ Use this analyzed data to provide detailed, specific feedback to the user.
 Highlight trends, strengths, weaknesses, and actionable advice.
 DO NOT call any tools - all analysis is complete above."""
                 
-                result = self.agent(enhanced_query)
+                # Suppress stdout during agent execution to prevent Strands SDK from printing
+                import sys
+                import io
+                old_stdout = sys.stdout
+                sys.stdout = io.StringIO()
+                
+                try:
+                    result = self.agent(enhanced_query)
+                finally:
+                    sys.stdout = old_stdout
             else:
-                result = self.agent(query)
+                # Suppress stdout during agent execution
+                import sys
+                import io
+                old_stdout = sys.stdout
+                sys.stdout = io.StringIO()
+                
+                try:
+                    result = self.agent(query)
+                finally:
+                    sys.stdout = old_stdout
             
             return result.message['content'][0]['text']
         except Exception as e:

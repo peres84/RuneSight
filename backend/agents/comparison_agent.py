@@ -512,9 +512,27 @@ CACHED DATA FOR {riot_id}:
 
 Use this data to answer the user's question. If comparing with another player, fetch their data using compare_players or get_user_profile tools."""
                 
-                result = self.agent(enhanced_query)
+                # Suppress stdout during agent execution to prevent Strands SDK from printing
+                import sys
+                import io
+                old_stdout = sys.stdout
+                sys.stdout = io.StringIO()
+                
+                try:
+                    result = self.agent(enhanced_query)
+                finally:
+                    sys.stdout = old_stdout
             else:
-                result = self.agent(query)
+                # Suppress stdout during agent execution
+                import sys
+                import io
+                old_stdout = sys.stdout
+                sys.stdout = io.StringIO()
+                
+                try:
+                    result = self.agent(query)
+                finally:
+                    sys.stdout = old_stdout
             
             return result.message['content'][0]['text']
         except Exception as e:

@@ -115,76 +115,95 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) 
   return (
     <div className={`flex flex-col h-full bg-white dark:bg-gray-900 ${className}`}>
       {/* Header */}
-      <div className="border-b border-gray-200 dark:border-gray-700 p-4">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+      <div className="border-b border-gray-200 dark:border-gray-700 p-3 md:p-4">
+        <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
           AI Analysis Chat
         </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
           Ask questions about your gameplay and get AI-powered insights
         </p>
 
-        {/* Agent Selector - All 5 Agents */}
-        <div className="flex flex-wrap gap-2 mt-3">
-          <button
-            onClick={() => setForceAgent(undefined)}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              !forceAgent
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            🤖 Auto
-          </button>
-          <button
-            onClick={() => setForceAgent('performance')}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              forceAgent === 'performance'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            📊 Performance
-          </button>
-          <button
-            onClick={() => setForceAgent('champion')}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              forceAgent === 'champion'
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            ⚔️ Champion
-          </button>
-          <button
-            onClick={() => setForceAgent('comparison')}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              forceAgent === 'comparison'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            🔄 Comparison
-          </button>
-          <button
-            onClick={() => setForceAgent('team_synergy')}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              forceAgent === 'team_synergy'
-                ? 'bg-yellow-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            👥 Team Synergy
-          </button>
-          <button
-            onClick={() => setForceAgent('match_summarizer')}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              forceAgent === 'match_summarizer'
-                ? 'bg-pink-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            📝 Summarizer
-          </button>
+        {/* Agent Selector - Dropdown on Mobile, Buttons on Desktop */}
+        <div className="mt-3">
+          {/* Mobile: Dropdown */}
+          <div className="md:hidden">
+            <select
+              value={forceAgent || 'auto'}
+              onChange={(e) => setForceAgent(e.target.value === 'auto' ? undefined : e.target.value as any)}
+              className="w-full px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="auto">🤖 Auto (Best Agent)</option>
+              <option value="performance">📊 Performance</option>
+              <option value="champion">⚔️ Champion</option>
+              <option value="comparison">🔄 Comparison</option>
+              <option value="team_synergy">👥 Team Synergy</option>
+              <option value="match_summarizer">📝 Summarizer</option>
+            </select>
+          </div>
+
+          {/* Desktop: Buttons */}
+          <div className="hidden md:flex flex-wrap gap-2">
+            <button
+              onClick={() => setForceAgent(undefined)}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                !forceAgent
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              🤖 Auto
+            </button>
+            <button
+              onClick={() => setForceAgent('performance')}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                forceAgent === 'performance'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              📊 Performance
+            </button>
+            <button
+              onClick={() => setForceAgent('champion')}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                forceAgent === 'champion'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              ⚔️ Champion
+            </button>
+            <button
+              onClick={() => setForceAgent('comparison')}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                forceAgent === 'comparison'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              🔄 Comparison
+            </button>
+            <button
+              onClick={() => setForceAgent('team_synergy')}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                forceAgent === 'team_synergy'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              👥 Team Synergy
+            </button>
+            <button
+              onClick={() => setForceAgent('match_summarizer')}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                forceAgent === 'match_summarizer'
+                  ? 'bg-pink-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              📝 Summarizer
+            </button>
+          </div>
         </div>
       </div>
 
@@ -215,39 +234,39 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) 
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+      {/* Input Area - Compact on Mobile */}
+      <div className="border-t border-gray-200 dark:border-gray-700 p-2 md:p-4">
         <div className="flex space-x-2">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={forceAgent ? `Ask ${forceAgent} agent...` : 'Ask anything (AI will choose best agent)...'}
-            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            rows={2}
+            placeholder={forceAgent ? `Ask ${forceAgent} agent...` : 'Ask anything...'}
+            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm md:text-base text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            rows={1}
             disabled={chatMutation.isPending}
           />
           <button
             onClick={handleSendMessage}
             disabled={!input.trim() || chatMutation.isPending}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            className="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
             {chatMutation.isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
             ) : (
-              <Send className="w-5 h-5" />
+              <Send className="w-4 h-4 md:w-5 md:h-5" />
             )}
           </button>
         </div>
-        <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center justify-between mt-1 md:mt-2 text-[10px] md:text-xs text-gray-500 dark:text-gray-400">
           {profile?.riotId && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Analyzing for: {profile.riotId}
+            <p className="truncate max-w-[50%]">
+              {profile.riotId}
             </p>
           )}
           {sessionId && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Session: {sessionId.slice(0, 8)}... • {messages.length} messages
+            <p className="truncate">
+              {messages.length} msg
             </p>
           )}
         </div>

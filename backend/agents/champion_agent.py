@@ -476,6 +476,9 @@ Use the get_matchup_history tool to retrieve historical data."""
         Returns:
             AI-generated response to the query
         """
+        import sys
+        import io
+        
         try:
             # If match data is provided, analyze it directly
             if match_data and len(match_data) > 0:
@@ -506,9 +509,23 @@ Top Champions:
 
 Use this data to answer the user's question. DO NOT call tools - all data is provided above."""
                 
-                result = self.agent(enhanced_query)
+                # Suppress stdout during agent execution to prevent Strands SDK from printing
+                old_stdout = sys.stdout
+                sys.stdout = io.StringIO()
+                
+                try:
+                    result = self.agent(enhanced_query)
+                finally:
+                    sys.stdout = old_stdout
             else:
-                result = self.agent(query)
+                # Suppress stdout during agent execution
+                old_stdout = sys.stdout
+                sys.stdout = io.StringIO()
+                
+                try:
+                    result = self.agent(query)
+                finally:
+                    sys.stdout = old_stdout
             
             return result.message['content'][0]['text']
         except Exception as e:

@@ -421,25 +421,6 @@ Use the get_season_review tool to retrieve the data."""
             logging.error(f"Error in create_season_review: {e}")
             return f"Error creating season review: {str(e)}"
     
-    def custom_query(self, query: str, match_data: List[dict] = None) -> str:
-        """
-        Handle custom summary queries.
-        
-        Args:
-            query: Natural language query about match summaries
-            match_data: Optional pre-fetched match data from frontend
-            
-        Returns:
-            AI-generated response to the query
-        """
-        try:
-            result = self.agent(query)
-            return result.message['content'][0]['text']
-        except Exception as e:
-            logging.error(f"Error in custom_query: {e}")
-            raise Exception(f"AI analysis failed: {str(e)}")
-
-    
     def custom_query(self, query: str, match_data: Optional[List[dict]] = None) -> str:
         """
         Handle custom match summary queries.
@@ -451,8 +432,19 @@ Use the get_season_review tool to retrieve the data."""
         Returns:
             AI-generated response
         """
+        import sys
+        import io
+        
         try:
-            result = self.agent(query)
+            # Suppress stdout during agent execution to prevent Strands SDK from printing
+            old_stdout = sys.stdout
+            sys.stdout = io.StringIO()
+            
+            try:
+                result = self.agent(query)
+            finally:
+                sys.stdout = old_stdout
+            
             return result.message['content'][0]['text']
         except Exception as e:
             logging.error(f"Error in custom_query: {e}")

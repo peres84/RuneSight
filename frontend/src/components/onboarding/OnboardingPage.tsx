@@ -54,8 +54,16 @@ const FEATURES = [
 export function OnboardingPage({ onComplete, onBack }: OnboardingPageProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [riotId, setRiotId] = useState('');
-  const [region, setRegion] = useState('europe');
+  const [region, setRegion] = useState('euw'); // Default to EUW
+  const [regionalRouting, setRegionalRouting] = useState('EUROPE');
+  const [platform, setPlatform] = useState('EUW1');
   const [isValidating, setIsValidating] = useState(false);
+
+  const handleRegionChange = (value: string, routing: string, platformCode: string) => {
+    setRegion(value);
+    setRegionalRouting(routing);
+    setPlatform(platformCode);
+  };
 
   const handleNext = () => {
     if (currentStep < ONBOARDING_STEPS.length - 1) {
@@ -173,7 +181,7 @@ export function OnboardingPage({ onComplete, onBack }: OnboardingPageProps) {
               
               <RegionSelector
                 region={region}
-                onRegionChange={setRegion}
+                onRegionChange={handleRegionChange}
               />
             </div>
           </motion.div>

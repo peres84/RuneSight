@@ -195,12 +195,12 @@ export function Navigation({ profile, currentPage, onNavigate, onLogout, onOpenC
 
         {/* Mobile Navigation (only show when user has profile) */}
         {profile && (
-          <nav className="md:hidden mt-4 flex space-x-1 overflow-x-auto">
+          <nav className="md:hidden mt-4 flex space-x-2 overflow-x-auto pb-1">
             {NAVIGATION_ITEMS.map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleNavItemClick(item.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors whitespace-nowrap ${
+                className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors whitespace-nowrap text-sm ${
                   currentPage === item.id && item.id !== 'chat'
                     ? 'bg-primary text-primary-foreground'
                     : currentPage === 'landing'

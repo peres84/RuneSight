@@ -117,25 +117,52 @@ apiClient.interceptors.response.use(
 
 // ==================== Riot API Functions ====================
 
-// Region mapping helper
+// Region mapping helper - Maps frontend region codes to backend REGIONAL_ROUTING and PLATFORM_ROUTING
 const mapRegionToBackend = (region: string): { region: string; platform: string } => {
   const regionLower = region.toLowerCase();
   
   const regionMap: Record<string, { region: string; platform: string }> = {
+    // Europe
     'europe': { region: 'EUROPE', platform: 'EUW1' },
     'euw': { region: 'EUROPE', platform: 'EUW1' },
     'euw1': { region: 'EUROPE', platform: 'EUW1' },
     'eune': { region: 'EUROPE', platform: 'EUN1' },
-    'eune1': { region: 'EUROPE', platform: 'EUN1' },
+    'eun1': { region: 'EUROPE', platform: 'EUN1' },
+    'tr': { region: 'EUROPE', platform: 'TR1' },
+    'tr1': { region: 'EUROPE', platform: 'TR1' },
+    'ru': { region: 'EUROPE', platform: 'RU' },
+    
+    // Americas
     'americas': { region: 'AMERICAS', platform: 'NA1' },
     'na': { region: 'AMERICAS', platform: 'NA1' },
     'na1': { region: 'AMERICAS', platform: 'NA1' },
     'br': { region: 'AMERICAS', platform: 'BR1' },
     'br1': { region: 'AMERICAS', platform: 'BR1' },
+    'lan': { region: 'AMERICAS', platform: 'LA1' }, // Latin America North
+    'la1': { region: 'AMERICAS', platform: 'LA1' },
+    'las': { region: 'AMERICAS', platform: 'LA2' }, // Latin America South
+    'la2': { region: 'AMERICAS', platform: 'LA2' },
+    
+    // Asia
     'asia': { region: 'ASIA', platform: 'KR' },
     'kr': { region: 'ASIA', platform: 'KR' },
     'jp': { region: 'ASIA', platform: 'JP1' },
     'jp1': { region: 'ASIA', platform: 'JP1' },
+    'oce': { region: 'ASIA', platform: 'OC1' }, // Oceania
+    'oc1': { region: 'ASIA', platform: 'OC1' },
+    
+    // SEA (Southeast Asia)
+    'sea': { region: 'SEA', platform: 'SG2' },
+    'ph': { region: 'SEA', platform: 'PH2' }, // Philippines
+    'ph2': { region: 'SEA', platform: 'PH2' },
+    'sg': { region: 'SEA', platform: 'SG2' }, // Singapore
+    'sg2': { region: 'SEA', platform: 'SG2' },
+    'th': { region: 'SEA', platform: 'TH2' }, // Thailand
+    'th2': { region: 'SEA', platform: 'TH2' },
+    'tw': { region: 'SEA', platform: 'TW2' }, // Taiwan
+    'tw2': { region: 'SEA', platform: 'TW2' },
+    'vn': { region: 'SEA', platform: 'VN2' }, // Vietnam
+    'vn2': { region: 'SEA', platform: 'VN2' },
   };
   
   return regionMap[regionLower] || { region: 'EUROPE', platform: 'EUW1' };
