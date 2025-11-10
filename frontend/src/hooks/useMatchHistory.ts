@@ -63,19 +63,23 @@ const hasNewMatches = (cached: MatchHistoryResponse, fresh: MatchHistoryResponse
 
 export function useMatchHistory({
   riotId,
-  region = 'EUROPE',
-  platform = 'EUW1',
+  region = 'AMERICAS',
+  platform,
   count = 20,
   queue,
   enabled = true,
 }: UseMatchHistoryOptions): UseQueryResult<MatchHistoryResponse, Error> {
+  console.log('📊 useMatchHistory - Called with:', { riotId, region, platform, count, queue });
+
   return useQuery({
-    queryKey: ['matchHistory', riotId, region, platform, count, queue],
+    queryKey: ['matchHistory', riotId, region, platform, count, queue], // Include platform in cache key
     queryFn: async () => {
+      console.log('📊 useMatchHistory - queryFn executing with:', { riotId, region, platform, count, queue });
+
       // Try to get cached data first
       const cached = getCachedMatches(riotId, queue);
-      
-      // Fetch fresh data
+
+      // Fetch fresh data - pass platform if available, backend will use it or auto-detect
       const freshData = await api.riot.getMatchHistory(riotId, region, platform, count, queue);
       
       // If we have cached data and no new matches, return cached data

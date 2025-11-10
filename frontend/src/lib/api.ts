@@ -174,41 +174,58 @@ export const riotApi = {
    */
   validateRiotId: async (
     riotId: string,
-    region: string = 'europe',
+    region: string = 'americas',
     platform?: string
   ): Promise<RiotIdValidationResponse> => {
     const { region: backendRegion, platform: backendPlatform } = mapRegionToBackend(region);
-    
-    const response = await apiClient.post<RiotIdValidationResponse>('/api/riot/validate', {
+
+    const response = await apiClient.post<any>('/api/riot/validate', {
       riot_id: riotId,
       region: backendRegion,
       platform: platform || backendPlatform,
     });
-    return response.data;
+
+    // Backend returns snake_case (player_data), convert to camelCase (playerData)
+    const data = response.data;
+    console.log('🔍 RAW API RESPONSE:', data);
+
+    return {
+      valid: data.valid,
+      puuid: data.puuid,
+      riotId: data.riot_id || `${data.game_name}#${data.tag_line}`,
+      region: data.region,
+      playerData: data.player_data, // Convert snake_case to camelCase
+      error: data.error
+    };
   },
 
   /**
    * Get match history for a player
+   * Backend will auto-detect the correct platform using region detection API if platform not provided
    */
   getMatchHistory: async (
     riotId: string,
-    region: string = 'europe',
+    region: string = 'americas',
     platform?: string,
     count: number = 20,
     queue?: number
   ): Promise<MatchHistoryResponse> => {
-    const { region: backendRegion, platform: backendPlatform } = mapRegionToBackend(region);
-    
-    const params: any = { 
-      region: backendRegion, 
-      platform: platform || backendPlatform, 
-      count 
+    const { region: backendRegion, platform: mappedPlatform } = mapRegionToBackend(region);
+
+    console.log('🌐 api.getMatchHistory - Input:', { riotId, region, platform, count, queue });
+    console.log('🌐 api.getMatchHistory - Mapped:', { backendRegion, mappedPlatform });
+    console.log('🌐 api.getMatchHistory - Will use platform:', platform || mappedPlatform);
+
+    const params: any = {
+      region: backendRegion,
+      platform: platform || mappedPlatform, // Use provided platform or fallback to mapped platform
+      count
     };
-    
+
     if (queue) {
       params.queue = queue;
     }
-    
+
     const response = await apiClient.get<MatchHistoryResponse>(
       `/api/riot/matches/${encodeURIComponent(riotId)}`,
       { params }
@@ -221,7 +238,7 @@ export const riotApi = {
    */
   getMatchDetails: async (
     matchId: string,
-    region: string = 'europe',
+    region: string = 'americas',
     puuid?: string
   ): Promise<MatchDetailsResponse> => {
     const { region: backendRegion } = mapRegionToBackend(region);
@@ -237,20 +254,25 @@ export const riotApi = {
 
   /**
    * Get ranked league information for a player
+   * Backend will auto-detect the correct platform using region detection API if platform not provided
    */
   getRankedInfo: async (
     riotId: string,
-    region: string = 'europe',
+    region: string = 'americas',
     platform?: string
   ): Promise<any> => {
-    const { region: backendRegion, platform: backendPlatform } = mapRegionToBackend(region);
-    
+    const { region: backendRegion, platform: mappedPlatform } = mapRegionToBackend(region);
+
+    console.log('🌐 api.getRankedInfo - Input:', { riotId, region, platform });
+    console.log('🌐 api.getRankedInfo - Mapped:', { backendRegion, mappedPlatform });
+    console.log('🌐 api.getRankedInfo - Will use platform:', platform || mappedPlatform);
+
     const response = await apiClient.get(
       `/api/riot/ranked/${encodeURIComponent(riotId)}`,
       {
-        params: { 
-          region: backendRegion, 
-          platform: platform || backendPlatform
+        params: {
+          region: backendRegion,
+          platform: platform || mappedPlatform // Use provided platform or fallback to mapped platform
         },
       }
     );

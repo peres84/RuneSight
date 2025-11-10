@@ -114,9 +114,17 @@ export function Navigation({ profile, currentPage, onNavigate, onLogout, onOpenC
                       : 'hover:bg-muted'
                   }`}
                 >
-                  <div className="w-8 h-8 bg-runesight-primary/10 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-runesight-primary dark:text-white" />
-                  </div>
+                  {profile.profileIconId ? (
+                    <img
+                      src={`https://ddragon.leagueoflegends.com/cdn/14.23.1/img/profileicon/${profile.profileIconId}.png`}
+                      alt="Profile Icon"
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-runesight-primary/10 rounded-full flex items-center justify-center">
+                      <User className="w-4 h-4 text-runesight-primary dark:text-white" />
+                    </div>
+                  )}
                   <div className="hidden sm:block text-left">
                     <p className={`text-sm font-medium ${currentPage === 'landing' ? 'text-white' : ''}`}>
                       {profile.riotId}
@@ -142,16 +150,24 @@ export function Navigation({ profile, currentPage, onNavigate, onLogout, onOpenC
                   >
                     <div className="p-4 border-b border-border">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-runesight-primary/10 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-runesight-primary dark:text-white" />
-                        </div>
+                        {profile.profileIconId ? (
+                          <img
+                            src={`https://ddragon.leagueoflegends.com/cdn/14.23.1/img/profileicon/${profile.profileIconId}.png`}
+                            alt="Profile Icon"
+                            className="w-10 h-10 rounded-full"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-runesight-primary/10 rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-runesight-primary dark:text-white" />
+                          </div>
+                        )}
                         <div>
                           <p className="font-medium">{profile.riotId}</p>
                           <p className="text-sm text-muted-foreground">
                             {profile.displayName || 'Summoner'}
                           </p>
                           <p className="text-xs text-muted-foreground capitalize">
-                            {profile.region} • Level {profile.puuid ? '?' : 'Unknown'}
+                            {profile.region} • Level {profile.summonerLevel || '?'}
                           </p>
                         </div>
                       </div>
@@ -195,12 +211,12 @@ export function Navigation({ profile, currentPage, onNavigate, onLogout, onOpenC
 
         {/* Mobile Navigation (only show when user has profile) */}
         {profile && (
-          <nav className="md:hidden mt-4 flex space-x-2 overflow-x-auto pb-1">
+          <nav className="md:hidden mt-4 grid grid-cols-2 gap-2">
             {NAVIGATION_ITEMS.map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleNavItemClick(item.id)}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors whitespace-nowrap text-sm ${
+                className={`flex items-center justify-center space-x-2 px-3 py-2 rounded-md transition-colors text-sm ${
                   currentPage === item.id && item.id !== 'chat'
                     ? 'bg-primary text-primary-foreground'
                     : currentPage === 'landing'

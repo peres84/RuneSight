@@ -103,10 +103,23 @@ const AGENT_CARDS = [
 // QUICK_STATS will be dynamically generated from match data
 
 export function Dashboard({ profile, onNavigateToChat }: DashboardProps) {
+  // Use region and platform from profile
+  const regionForAPI = profile.region || 'AMERICAS';
+  const platformForAPI = profile.platform;
+
+  console.log('🎮 Dashboard - Profile data:', {
+    riotId: profile.riotId,
+    region: profile.region,
+    platform: profile.platform,
+    regionForAPI,
+    platformForAPI
+  });
+
   // Fetch match history
   const { data: matchHistory, isLoading, error } = useMatchHistory({
     riotId: profile.riotId,
-    region: profile.region || 'EUROPE',
+    region: regionForAPI,
+    platform: platformForAPI,
     count: 10,
     enabled: !!profile.riotId
   });
@@ -114,7 +127,8 @@ export function Dashboard({ profile, onNavigateToChat }: DashboardProps) {
   // Fetch ranked info
   const { data: rankedInfo, isLoading: isLoadingRanked, error: rankedError } = useRankedInfo({
     riotId: profile.riotId,
-    region: profile.region || 'EUROPE',
+    region: regionForAPI,
+    platform: platformForAPI,
     enabled: !!profile.riotId
   });
 
@@ -122,26 +136,38 @@ export function Dashboard({ profile, onNavigateToChat }: DashboardProps) {
   useEffect(() => {
     if (matchHistory?.matches && rankedInfo) {
       try {
+        // Use summoner level from rankedInfo (always fresh from API)
+        const summonerLevel = rankedInfo.summoner_level || profile.summonerLevel || 0;
+        const profileIconId = profile.profileIconId || 0;
+        
         console.log('🔄 Generating user profile from cached data...', {
           matches: matchHistory.matches.length,
-          rankedData: rankedInfo.ranked_data || rankedInfo
+          rankedData: rankedInfo.ranked_data || rankedInfo,
+          summonerLevelFromRankedInfo: rankedInfo.summoner_level,
+          summonerLevelFromProfile: profile.summonerLevel,
+          summonerLevelUsed: summonerLevel,
+          profileIconId
         });
         
         const userProfile = generateUserProfileFromCache(
           profile.riotId,
           matchHistory.matches as any,
-          (rankedInfo.ranked_data || rankedInfo) as any
+          (rankedInfo.ranked_data || rankedInfo) as any,
+          summonerLevel,
+          profileIconId
         );
         
         if (userProfile) {
           setStoredUserProfile(profile.riotId, userProfile);
-          console.log('✅ User profile generated and cached for AI agents:', userProfile);
+          console.log('✅ User profile generated and cached for AI agents');
+          console.log('   Summoner Level:', userProfile.summoner_level);
+          console.log('   Profile Icon:', userProfile.profile_icon_id);
         }
       } catch (error) {
         console.error('❌ Error generating user profile:', error);
       }
     }
-  }, [matchHistory, rankedInfo, profile.riotId]);
+  }, [matchHistory, rankedInfo, profile.riotId, profile.summonerLevel, profile.profileIconId]);
 
   // Debug logging
   console.log('Ranked Info:', rankedInfo);

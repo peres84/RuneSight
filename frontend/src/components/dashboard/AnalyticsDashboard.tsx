@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp,
@@ -23,6 +23,8 @@ import { useRankedInfo } from '../../hooks/useRankedInfo';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { RiotButton } from '../ui/RiotButton';
 import { InlineLoading } from '../LoadingState';
+import { generateUserProfileFromCache } from '../../lib/profileGenerator';
+import { setStoredUserProfile } from '../../lib/storage';
 import type { MatchData } from '../../types';
 
 // Queue ID to game mode mapping
@@ -61,10 +63,17 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
   const [visibleMatches, setVisibleMatches] = useState(4);
   const [selectedQueue, setSelectedQueue] = useState<number | null>(null);
 
+  console.log('📊 AnalyticsDashboard - Profile:', {
+    riotId: profile?.riotId,
+    region: profile?.region,
+    platform: profile?.platform
+  });
+
   // Progressive loading: loads first 5 matches immediately, then fetches rest in background
   const progressiveData = useProgressiveMatchHistory({
     riotId: profile?.riotId || '',
-    region: profile?.region || 'europe',
+    region: profile?.region || 'AMERICAS',
+    platform: profile?.platform, // ← PASS PLATFORM!
     enabled: !!profile?.riotId,
   });
 
@@ -72,8 +81,8 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
   const { data: queueMatchHistory } = useQueueMatches(
     profile?.riotId || '',
     selectedQueue,
-    profile?.region || 'europe',
-    undefined,
+    profile?.region || 'AMERICAS',
+    profile?.platform, // ← PASS PLATFORM!
     !!profile?.riotId && selectedQueue !== null
   );
 
@@ -81,6 +90,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
   const { data: rankedInfo } = useRankedInfo({
     riotId: profile?.riotId || '',
     region: profile?.region || 'europe',
+    platform: profile?.platform, // ← PASS PLATFORM!
     enabled: !!profile?.riotId,
   });
 
@@ -88,8 +98,46 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
   const { data: userProfile } = useUserProfile({
     riotId: profile?.riotId || '',
     region: profile?.region || 'europe',
+    platform: profile?.platform, // ← PASS PLATFORM!
     enabled: !!profile?.riotId && !!progressiveData.all,
   });
+
+  // Auto-generate user profile from match data when available
+  useEffect(() => {
+    if (progressiveData.all?.matches && rankedInfo && profile?.riotId) {
+      try {
+        // Get summoner level from ranked info (always fresh from API)
+        const summonerLevel = rankedInfo.summoner_level || profile.summonerLevel || 0;
+        const profileIconId = profile.profileIconId || 0;
+
+        console.log('🔄 Auto-generating user profile from match data...', {
+          matches: progressiveData.all.matches.length,
+          rankedData: rankedInfo.ranked_data || rankedInfo,
+          summonerLevel,
+          profileIconId,
+          riotId: profile.riotId
+        });
+
+        const generatedProfile = generateUserProfileFromCache(
+          profile.riotId,
+          progressiveData.all.matches as any,
+          (rankedInfo.ranked_data || rankedInfo) as any,
+          summonerLevel,
+          profileIconId
+        );
+
+        if (generatedProfile) {
+          setStoredUserProfile(profile.riotId, generatedProfile);
+          console.log('✅ User profile auto-generated and cached for AI agents');
+          console.log('   Summoner Level:', generatedProfile.summoner_level);
+          console.log('   Ranked Solo:', generatedProfile.ranked_solo);
+          console.log('   Ranked Flex:', generatedProfile.ranked_flex);
+        }
+      } catch (error) {
+        console.error('❌ Error auto-generating user profile:', error);
+      }
+    }
+  }, [progressiveData.all, rankedInfo, profile?.riotId, profile?.summonerLevel, profile?.profileIconId]);
 
   // Determine which matches to display based on selected queue
   const getMatchesForQueue = () => {

@@ -113,102 +113,32 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) 
   };
 
   return (
-    <div className={`flex flex-col h-full bg-white dark:bg-gray-900 ${className}`}>
-      {/* Header */}
-      <div className="border-b border-gray-200 dark:border-gray-700 p-3 md:p-4">
-        <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
-          AI Analysis Chat
-        </h2>
-        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-          Ask questions about your gameplay and get AI-powered insights
-        </p>
-
-        {/* Agent Selector - Dropdown on Mobile, Buttons on Desktop */}
-        <div className="mt-3">
-          {/* Mobile: Dropdown */}
-          <div className="md:hidden">
-            <select
-              value={forceAgent || 'auto'}
-              onChange={(e) => setForceAgent(e.target.value === 'auto' ? undefined : e.target.value as any)}
-              className="w-full px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="auto">🤖 Auto (Best Agent)</option>
-              <option value="performance">📊 Performance</option>
-              <option value="champion">⚔️ Champion</option>
-              <option value="comparison">🔄 Comparison</option>
-              <option value="team_synergy">👥 Team Synergy</option>
-              <option value="match_summarizer">📝 Summarizer</option>
-            </select>
-          </div>
-
-          {/* Desktop: Buttons */}
-          <div className="hidden md:flex flex-wrap gap-2">
-            <button
-              onClick={() => setForceAgent(undefined)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                !forceAgent
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-            >
-              🤖 Auto
-            </button>
-            <button
-              onClick={() => setForceAgent('performance')}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                forceAgent === 'performance'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-            >
-              📊 Performance
-            </button>
-            <button
-              onClick={() => setForceAgent('champion')}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                forceAgent === 'champion'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-            >
-              ⚔️ Champion
-            </button>
-            <button
-              onClick={() => setForceAgent('comparison')}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                forceAgent === 'comparison'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-            >
-              🔄 Comparison
-            </button>
-            <button
-              onClick={() => setForceAgent('team_synergy')}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                forceAgent === 'team_synergy'
-                  ? 'bg-yellow-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-            >
-              👥 Team Synergy
-            </button>
-            <button
-              onClick={() => setForceAgent('match_summarizer')}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                forceAgent === 'match_summarizer'
-                  ? 'bg-pink-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-            >
-              📝 Summarizer
-            </button>
-          </div>
+    <div className={`flex flex-col h-full bg-slate-50 dark:bg-slate-900 ${className}`}>
+      {/* Agent Selector - Compact Dropdown */}
+      <div className="border-b border-slate-300 dark:border-slate-700/50 px-3 md:px-4 py-2 bg-slate-200/50 dark:bg-slate-800/30">
+        <div className="flex items-center space-x-2">
+          <label htmlFor="agent-select" className="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap uppercase tracking-wider">
+            Agent:
+          </label>
+          <select
+            id="agent-select"
+            value={forceAgent || 'auto'}
+            onChange={(e) => setForceAgent(e.target.value === 'auto' ? undefined : e.target.value as any)}
+            className="flex-1 px-3 py-2 rounded-md text-xs font-bold text-center bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 text-white border border-runesight-accent/50 hover:border-runesight-accent focus:outline-none focus:ring-2 focus:ring-runesight-accent focus:border-runesight-accent transition-all uppercase tracking-wider cursor-pointer shadow-inner [&>option]:bg-slate-900 [&>option]:text-white [&>option]:py-2 [&>option]:text-center"
+            style={{ clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 100%, 6px 100%)' }}
+          >
+            <option value="auto" className="bg-slate-900 text-white font-bold">🤖 AUTO</option>
+            <option value="performance" className="bg-slate-900 text-white font-bold">📊 PERFORMANCE</option>
+            <option value="champion" className="bg-slate-900 text-white font-bold">⚔️ CHAMPION</option>
+            <option value="comparison" className="bg-slate-900 text-white font-bold">🔄 COMPARISON</option>
+            <option value="team_synergy" className="bg-slate-900 text-white font-bold">👥 TEAM SYNERGY</option>
+            <option value="match_summarizer" className="bg-slate-900 text-white font-bold">📝 SUMMARIZER</option>
+          </select>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white dark:bg-slate-900">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center">
             <ExamplePrompts onPromptClick={handleExampleClick} />
@@ -219,12 +149,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) 
               <ChatMessage key={message.id} message={message} />
             ))}
             {chatMutation.isPending && (
-              <div className="flex items-center space-x-2 text-gray-500 dark:text-gray-400">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Analyzing with AI agent...</span>
+              <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400">
+                <Loader2 className="w-5 h-5 animate-spin text-runesight-accent" />
+                <span className="text-sm font-medium">Analyzing with AI agent...</span>
                 {profile?.riotId && (
                   <span title="Using cached data for faster response">
-                    <Zap className="w-4 h-4 text-yellow-500" />
+                    <Zap className="w-4 h-4 text-runesight-accent" />
                   </span>
                 )}
               </div>
@@ -235,21 +165,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) 
       </div>
 
       {/* Input Area - Compact on Mobile */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-2 md:p-4">
+      <div className="border-t border-slate-300 dark:border-slate-700/50 p-2 md:p-4 bg-slate-200/50 dark:bg-slate-800/30">
         <div className="flex space-x-2">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={forceAgent ? `Ask ${forceAgent} agent...` : 'Ask anything...'}
-            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm md:text-base text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-700/50 rounded-lg bg-white dark:bg-slate-800/50 text-sm md:text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-runesight-accent focus:border-runesight-accent/50 resize-none transition-all"
             rows={1}
             disabled={chatMutation.isPending}
           />
           <button
             onClick={handleSendMessage}
             disabled={!input.trim() || chatMutation.isPending}
-            className="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+            className="px-3 md:px-4 py-2 bg-gradient-to-r from-runesight-accent to-runesight-secondary text-white font-bold uppercase tracking-wider rounded-lg hover:from-runesight-accent/80 hover:to-runesight-secondary/80 disabled:from-slate-400 disabled:to-slate-300 dark:disabled:from-slate-700 dark:disabled:to-slate-600 disabled:cursor-not-allowed transition-all flex-shrink-0 shadow-lg hover:shadow-runesight-accent/50"
+            style={{ clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 100%, 6px 100%)' }}
           >
             {chatMutation.isPending ? (
               <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
@@ -258,14 +189,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className = '' }) 
             )}
           </button>
         </div>
-        <div className="flex items-center justify-between mt-1 md:mt-2 text-[10px] md:text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex items-center justify-between mt-1 md:mt-2 text-[10px] md:text-xs font-medium">
           {profile?.riotId && (
-            <p className="truncate max-w-[50%]">
+            <p className="truncate max-w-[50%] text-runesight-accent/80 dark:text-runesight-accent/70">
               {profile.riotId}
             </p>
           )}
           {sessionId && (
-            <p className="truncate">
+            <p className="truncate text-slate-500 dark:text-slate-400">
               {messages.length} msg
             </p>
           )}

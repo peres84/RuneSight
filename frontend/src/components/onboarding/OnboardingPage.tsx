@@ -82,6 +82,7 @@ export function OnboardingPage({ onComplete, onBack }: OnboardingPageProps) {
   const handleRiotIdSubmit = async (validatedProfile: UserProfile) => {
     setIsValidating(true);
     try {
+      console.log('🎯 OnboardingPage - Received profile:', validatedProfile);
       // Add any additional processing here if needed
       onComplete(validatedProfile);
     } catch (error) {
@@ -177,11 +178,6 @@ export function OnboardingPage({ onComplete, onBack }: OnboardingPageProps) {
                 onRiotIdChange={setRiotId}
                 onSubmit={handleRiotIdSubmit}
                 isValidating={isValidating}
-              />
-              
-              <RegionSelector
-                region={region}
-                onRegionChange={handleRegionChange}
               />
             </div>
           </motion.div>

@@ -33,13 +33,18 @@ export interface UseRankedInfoOptions {
 
 export function useRankedInfo({
   riotId,
-  region = 'EUROPE',
+  region = 'AMERICAS',
   platform,
   enabled = true,
 }: UseRankedInfoOptions): UseQueryResult<RankedInfoResponse, Error> {
+  console.log('🏆 useRankedInfo - Called with:', { riotId, region, platform });
+
   return useQuery({
-    queryKey: ['rankedInfo', riotId, region, platform],
-    queryFn: () => api.riot.getRankedInfo(riotId, region, platform),
+    queryKey: ['rankedInfo', riotId, region, platform], // Include platform in cache key
+    queryFn: () => {
+      console.log('🏆 useRankedInfo - queryFn executing with:', { riotId, region, platform });
+      return api.riot.getRankedInfo(riotId, region, platform);
+    },
     enabled: enabled && !!riotId,
     staleTime: 1000 * 60 * 30, // 30 minutes
     gcTime: 1000 * 60 * 60, // 1 hour

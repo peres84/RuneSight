@@ -58,11 +58,11 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', duration: 0.3 }}
-            className="fixed inset-2 md:inset-8 lg:inset-16 z-50 flex items-center justify-center"
+            className="fixed inset-2 md:inset-3 lg:inset-4 z-50 flex items-center justify-center"
           >
-            <div className="relative w-full h-full max-w-7xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-lg shadow-2xl border border-slate-700/50 overflow-hidden flex flex-col">
+            <div className="relative w-full h-full max-w-7xl bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 rounded-lg shadow-2xl border border-slate-300 dark:border-slate-700/50 overflow-hidden flex flex-col">
               {/* Header - Compact on Mobile */}
-              <div className="flex items-center justify-between px-3 md:px-6 py-3 md:py-4 border-b border-slate-700/50 bg-slate-800/50 backdrop-blur-sm">
+              <div className="flex items-center justify-between px-3 md:px-6 py-3 md:py-4 border-b border-slate-300 dark:border-slate-700/50 bg-slate-200/50 dark:bg-slate-800/50 backdrop-blur-sm">
                 <div className="flex items-center space-x-2 md:space-x-3 min-w-0 flex-1">
                   <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-runesight-accent/20 to-runesight-secondary/20 flex items-center justify-center rounded-lg flex-shrink-0">
                     <img
@@ -72,10 +72,10 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose }) => {
                     />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-base md:text-xl font-black text-white uppercase tracking-wide truncate">
+                    <h2 className="text-base md:text-xl font-black text-slate-900 dark:text-white uppercase tracking-wide truncate">
                       AI Analysis Chat
                     </h2>
-                    <p className="text-xs md:text-sm text-slate-400 hidden md:block">
+                    <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                       Ask questions about your gameplay and get AI-powered insights
                     </p>
                   </div>
@@ -84,10 +84,10 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose }) => {
                 {/* Close Button */}
                 <button
                   onClick={onClose}
-                  className="p-1.5 md:p-2 hover:bg-slate-700/50 rounded-lg transition-colors group flex-shrink-0"
+                  className="p-1.5 md:p-2 hover:bg-slate-300 dark:hover:bg-slate-700/50 rounded-lg transition-colors group flex-shrink-0"
                   aria-label="Close chat"
                 >
-                  <X className="w-5 h-5 md:w-6 md:h-6 text-slate-400 group-hover:text-white transition-colors" />
+                  <X className="w-5 h-5 md:w-6 md:h-6 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
                 </button>
               </div>
 
@@ -97,8 +97,8 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               {/* Mobile hint */}
-              <div className="md:hidden px-3 py-1.5 bg-slate-800/50 border-t border-slate-700/50 text-center">
-                <p className="text-[10px] text-slate-400">
+              <div className="md:hidden px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 border-t border-slate-300 dark:border-slate-700/50 text-center">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">
                   Swipe down or tap outside to close
                 </p>
               </div>

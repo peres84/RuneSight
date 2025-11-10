@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear RuneSight Cache</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+            margin-top: 1rem;
+            display: none;
+        }
+        .info {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: left;
+            border-radius: 0.5rem;
+        }
+        .code {
+            background: #f3f4f6;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            display: block;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Clear RuneSight Cache</h1>
+        <p>This will clear all cached data including:</p>
+        <ul style="text-align: left; color: #666;">
+            <li>User profile (region/platform settings)</li>
+            <li>Match history cache</li>
+            <li>Ranked info cache</li>
+            <li>Chat history</li>
+        </ul>
+
+        <div class="info">
+            <strong>⚠️ Why do this?</strong><br>
+            After code updates, old cached data with incorrect region/platform
+            settings can cause API calls to use wrong servers (e.g., EUW1 instead of LA1).
+        </div>
+
+        <button onclick="clearCache()">Clear Cache & Reload</button>
+        <div class="success" id="success">✅ Cache cleared! Reloading...</div>
+
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e5e7eb;">
+            <p style="font-size: 0.875rem; color: #999;">
+                Or open DevTools Console (F12) and run:
+            </p>
+            <code class="code">localStorage.clear(); location.reload();</code>
+        </div>
+    </div>
+
+    <script>
+        function clearCache() {
+            try {
+                // Clear all localStorage
+                localStorage.clear();
+
+                // Show success message
+                document.getElementById('success').style.display = 'block';
+
+                // Reload after 1 second
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            } catch (error) {
+                alert('Error clearing cache: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

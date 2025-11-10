@@ -18,6 +18,8 @@ class RiotIDValidationResponse(BaseModel):
     puuid: Optional[str] = None
     game_name: Optional[str] = None
     tag_line: Optional[str] = None
+    region: Optional[str] = None
+    player_data: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
 
 

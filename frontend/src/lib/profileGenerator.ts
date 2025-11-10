@@ -31,7 +31,9 @@ interface RankedData {
 export function generateUserProfileFromCache(
   riotId: string,
   matches: MatchData[],
-  rankedData: RankedData[]
+  rankedData: RankedData[],
+  summonerLevel?: number,
+  profileIconId?: number
 ) {
   if (!matches || matches.length === 0) {
     return null;
@@ -148,7 +150,8 @@ export function generateUserProfileFromCache(
   return {
     riot_id: riotId,
     puuid: 'cached',
-    summoner_level: 0, // Not available from match data
+    summoner_level: summonerLevel || 0,
+    profile_icon_id: profileIconId || 0,
     ranked_solo: rankedSolo ? {
       tier: (rankedSolo as any).tier,
       rank: (rankedSolo as any).rank,

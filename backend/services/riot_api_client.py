@@ -164,7 +164,7 @@ class RiotAPIClient:
 
         Args:
             game_name: Player's in-game name
-            tag_line: Player's tag (e.g., "NA1", "EUW")
+            tag_line: Player's tag (e.g., "LAG", "NA1", "EUW" - the actual Riot tag, not region)
             use_cache: Whether to use cached data
 
         Returns:
@@ -173,6 +173,11 @@ class RiotAPIClient:
         Raises:
             requests.HTTPError: If API request fails
         """
+        # URL encode the game name and tag line to handle special characters
+        from urllib.parse import quote
+        encoded_game_name = quote(game_name.strip())
+        encoded_tag_line = quote(tag_line.strip())
+        
         cache_key = f"account:{self.region}:{game_name}#{tag_line}"
         
         if use_cache and self.cache:
@@ -184,8 +189,9 @@ class RiotAPIClient:
         try:
             url = (
                 f"https://{self.REGIONAL_ROUTING[self.region]}"
-                f"/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}"
+                f"/riot/account/v1/accounts/by-riot-id/{encoded_game_name}/{encoded_tag_line}"
             )
+            logger.info(f"Fetching account: {url}")
             data = self._make_request(url)
             
             if data and self.cache:
@@ -196,7 +202,9 @@ class RiotAPIClient:
             return data.get("puuid") if data else None
         except requests.HTTPError as e:
             if e.response.status_code == 404:
+                logger.warning(f"Account not found: {game_name}#{tag_line} in region {self.region}")
                 return None
+            logger.error(f"HTTP error fetching account: {e.response.status_code}")
             raise
 
     def get_account_by_riot_id(
@@ -210,7 +218,7 @@ class RiotAPIClient:
 
         Args:
             game_name: Player's in-game name
-            tag_line: Player's tag (e.g., "NA1", "EUW")
+            tag_line: Player's tag (e.g., "LAG", "NA1", "EUW" - the actual Riot tag, not region)
             use_cache: Whether to use cached data
 
         Returns:
@@ -219,6 +227,11 @@ class RiotAPIClient:
         Raises:
             requests.HTTPError: If API request fails
         """
+        # URL encode the game name and tag line to handle special characters
+        from urllib.parse import quote
+        encoded_game_name = quote(game_name.strip())
+        encoded_tag_line = quote(tag_line.strip())
+        
         cache_key = f"account:{self.region}:{game_name}#{tag_line}"
         
         if use_cache and self.cache:
@@ -230,8 +243,9 @@ class RiotAPIClient:
         try:
             url = (
                 f"https://{self.REGIONAL_ROUTING[self.region]}"
-                f"/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}"
+                f"/riot/account/v1/accounts/by-riot-id/{encoded_game_name}/{encoded_tag_line}"
             )
+            logger.info(f"Fetching account: {url}")
             data = self._make_request(url)
             
             if data and self.cache:
@@ -242,7 +256,9 @@ class RiotAPIClient:
             return data
         except requests.HTTPError as e:
             if e.response.status_code == 404:
+                logger.warning(f"Account not found: {game_name}#{tag_line} in region {self.region}")
                 return None
+            logger.error(f"HTTP error fetching account: {e.response.status_code}")
             raise
 
     # ==================== Match API ====================
@@ -339,6 +355,59 @@ class RiotAPIClient:
         except requests.HTTPError as e:
             if e.response.status_code == 404:
                 return None
+            raise
+
+    # ==================== Region Detection API ====================
+
+    def get_active_region_by_puuid(
+        self,
+        puuid: str,
+        game: str = "lol",
+        use_cache: bool = True
+    ) -> Optional[Dict]:
+        """
+        Get the active region/platform for a PUUID in a specific game.
+        This tells us which platform the player actually plays on.
+
+        Args:
+            puuid: Player's encrypted PUUID
+            game: Game identifier (default: "lol" for League of Legends)
+            use_cache: Whether to use cached data
+
+        Returns:
+            JSON response with region info: {"puuid": "...", "game": "lol", "region": "la1"}
+            or None if not found
+
+        Raises:
+            requests.HTTPError: If API request fails
+        """
+        cache_key = f"active_region:{self.region}:{puuid}:{game}"
+        
+        if use_cache and self.cache:
+            cached_data = self.cache.get(cache_key)
+            if cached_data:
+                logger.debug(f"Cache hit: {cache_key}")
+                return cached_data
+
+        try:
+            url = (
+                f"https://{self.REGIONAL_ROUTING[self.region]}"
+                f"/riot/account/v1/region/by-game/{game}/by-puuid/{puuid}"
+            )
+            logger.info(f"Fetching active region: {url}")
+            data = self._make_request(url)
+            
+            if data and self.cache:
+                # Cache the region data
+                self.cache.set(cache_key, data, cache_type="active_region")
+                logger.debug(f"Cached: {cache_key}")
+            
+            return data
+        except requests.HTTPError as e:
+            if e.response.status_code == 404:
+                logger.warning(f"Active region not found for PUUID in {self.region}")
+                return None
+            logger.error(f"HTTP error fetching active region: {e.response.status_code}")
             raise
 
     # ==================== Summoner API ====================

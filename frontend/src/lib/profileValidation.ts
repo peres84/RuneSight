@@ -130,8 +130,9 @@ export function validateUserProfile(profile: any): ProfileValidationResult {
 
   // Check for unknown fields (potential data corruption or version mismatch)
   const knownFields = [
-    'riotId', 'region', 'puuid', 'displayName', 'favoriteChampions', 
-    'preferredAnalysisDepth', 'lastActive', 'schemaVersion'
+    'riotId', 'region', 'platform', 'puuid', 'displayName', 'summonerLevel',
+    'profileIconId', 'favoriteChampions', 'preferredAnalysisDepth',
+    'lastActive', 'schemaVersion'
   ];
   const unknownFields = Object.keys(profile).filter(key => !knownFields.includes(key));
   if (unknownFields.length > 0) {
@@ -213,7 +214,12 @@ function migrateLegacyToV1(profile: any): any {
 
   // Ensure required fields have sensible defaults
   if (!migrated.region) {
-    migrated.region = 'europe'; // Default region
+    migrated.region = 'AMERICAS'; // Default to AMERICAS (will be re-detected on next validation)
+  }
+
+  // Clear platform if migrating from old schema - force re-detection
+  if (!migrated.platform) {
+    delete (migrated as any).platform; // Will be detected on next API call
   }
 
   // Clean up any invalid data

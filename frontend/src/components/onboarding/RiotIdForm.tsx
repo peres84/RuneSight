@@ -15,7 +15,7 @@ export function RiotIdForm({
   riotId, 
   onRiotIdChange, 
   onSubmit, 
-  isValidating: externalValidating = false 
+  isValidating: externalValidating = false
 }: RiotIdFormProps) {
   const [hasInteracted, setHasInteracted] = useState(false);
   
@@ -29,7 +29,7 @@ export function RiotIdForm({
     canSubmit,
     serverValidation
   } = useRiotIdValidation({
-    validateOnChange: true,
+    validateOnChange: false, // Disable auto-validation
     debounceMs: 500
   });
 
@@ -49,36 +49,67 @@ export function RiotIdForm({
     setValidationRiotId(value);
   };
 
+  const handleValidate = async () => {
+    if (isValidating || !riotId.trim()) return;
+    
+    setHasInteracted(true);
+    console.log('Validating Riot ID (region will be auto-detected)');
+    
+    try {
+      await validate();
+    } catch (error) {
+      console.error('Validation failed:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!canSubmit || isValidating) {
+    if (isValidating) {
       return;
     }
 
+    // Check if Riot ID is entered
+    if (!riotId.trim()) {
+      return;
+    }
+
+    setHasInteracted(true);
+
     try {
-      // Validate if not already validated
-      let validationResult = serverValidation;
-      if (!validationResult || !validationResult.valid) {
-        const result = await validate();
-        validationResult = result || null;
-      }
+      // Always validate on submit (region will be auto-detected)
+      console.log('Validating Riot ID');
+      const result = await validate();
       
-      if (!validationResult) {
-        throw new Error('Validation failed');
+      if (!result || !result.valid) {
+        // Validation failed - error message will be shown
+        return;
       }
 
-      if (validationResult && validationResult.valid) {
-        const profile: UserProfile = {
-          riotId: validationResult.riotId || riotId,
-          region: validationResult.region || region,
-          puuid: validationResult.puuid,
-          displayName: validationResult.playerData?.summoner_name,
-          lastActive: Date.now()
-        };
-        
-        onSubmit(profile);
-      }
+      // Success - create profile and submit
+      const playerData = result.playerData || {};
+
+      console.log('🔍 VALIDATION RESULT:', {
+        full_result: result,
+        playerData: playerData,
+        platform_value: playerData.platform,
+        region_value: result.region
+      });
+
+      const profile: UserProfile = {
+        riotId: result.riotId || riotId,
+        region: result.region || region, // Regional routing (AMERICAS, EUROPE, ASIA, SEA)
+        platform: playerData.platform, // Platform code (LA1, NA1, EUW1, etc.)
+        puuid: result.puuid,
+        displayName: playerData.summoner_name || undefined, // Convert null to undefined
+        summonerLevel: playerData.summoner_level,
+        profileIconId: playerData.profile_icon_id,
+        lastActive: Date.now()
+      };
+
+      console.log('🔍 CREATED PROFILE:', profile);
+
+      onSubmit(profile);
     } catch (error) {
       console.error('Validation failed:', error);
     }
@@ -156,23 +187,40 @@ export function RiotIdForm({
         )}
       </div>
 
-      {/* Submit button */}
-      <motion.button
-        type="submit"
-        disabled={!canSubmit || isValidating}
-        className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-        whileHover={canSubmit && !isValidating ? { scale: 1.02 } : {}}
-        whileTap={canSubmit && !isValidating ? { scale: 0.98 } : {}}
-      >
-        {isValidating ? (
-          <div className="flex items-center justify-center space-x-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Validating...</span>
-          </div>
-        ) : (
-          'Continue'
-        )}
-      </motion.button>
+      {/* Validate button */}
+      {!serverValidation?.valid && (
+        <motion.button
+          type="button"
+          onClick={handleValidate}
+          disabled={!riotId.trim() || isValidating}
+          className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          whileHover={riotId.trim() && !isValidating ? { scale: 1.02 } : {}}
+          whileTap={riotId.trim() && !isValidating ? { scale: 0.98 } : {}}
+        >
+          {isValidating ? (
+            <div className="flex items-center justify-center space-x-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Validating...</span>
+            </div>
+          ) : (
+            'Validate Riot ID'
+          )}
+        </motion.button>
+      )}
+
+      {/* Submit button - only show after successful validation */}
+      {serverValidation?.valid && (
+        <motion.button
+          type="submit"
+          className="btn-primary w-full"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          Continue
+        </motion.button>
+      )}
       
       {/* Additional info for successful validation */}
       {serverValidation && serverValidation.valid && (

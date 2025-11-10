@@ -86,9 +86,12 @@ export function useProfile(options: UseProfileOptions = {}) {
 
   const saveProfile = useCallback((profileToSave: UserProfile) => {
     try {
+      console.log('💾 useProfile - saveProfile called with:', profileToSave);
+
       const validation = validateUserProfile(profileToSave);
-      
+
       if (!validation.isValid) {
+        console.error('❌ Profile validation failed:', validation.errors);
         throw new Error(`Cannot save invalid profile: ${validation.errors.join(', ')}`);
       }
 
@@ -99,19 +102,22 @@ export function useProfile(options: UseProfileOptions = {}) {
         schemaVersion: 1 // Current schema version
       };
 
+      console.log('💾 useProfile - Saving to localStorage:', profileWithTimestamp);
       profileStorage.set(profileWithTimestamp);
       setProfile(profileWithTimestamp);
       setHasUnsavedChanges(false);
       setError(null);
-      
+
       // Log warnings if any
       if (validation.warnings.length > 0) {
         console.warn('Profile validation warnings:', validation.warnings);
       }
-      
+
+      console.log('✅ Profile saved successfully!');
       return profileWithTimestamp;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to save profile';
+      console.error('❌ Failed to save profile:', errorMessage);
       setError(errorMessage);
       throw new Error(errorMessage);
     }

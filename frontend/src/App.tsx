@@ -44,8 +44,10 @@ function App() {
   }
 
   const handleOnboardingComplete = (newProfile: UserProfile) => {
-    createProfile(newProfile)
-    setCurrentPage('dashboard')
+    console.log('🎯 App - handleOnboardingComplete called with:', newProfile);
+    const savedProfile = createProfile(newProfile);
+    console.log('🎯 App - Profile saved to localStorage:', savedProfile);
+    setCurrentPage('dashboard');
   }
 
   const handleLogout = () => {

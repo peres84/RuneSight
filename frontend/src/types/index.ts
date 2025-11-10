@@ -2,9 +2,12 @@
 
 export interface UserProfile {
   riotId: string;
-  region: string;
+  region: string; // Regional routing: AMERICAS, EUROPE, ASIA, SEA
+  platform?: string; // Platform code: NA1, LA1, LA2, BR1, EUW1, EUN1, KR, JP1, etc.
   puuid?: string;
   displayName?: string;
+  summonerLevel?: number;
+  profileIconId?: number;
   favoriteChampions?: string[];
   preferredAnalysisDepth?: 'basic' | 'detailed' | 'expert';
   lastActive: number;

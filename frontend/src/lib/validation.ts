@@ -15,9 +15,10 @@ export interface RegionValidation {
 
 // Valid regions mapping
 export const VALID_REGIONS = {
-  europe: ['euw1', 'eune1', 'tr1', 'ru'],
-  americas: ['na1', 'br1', 'la1', 'la2'],
-  asia: ['kr', 'jp1', 'oc1']
+  europe: ['euw', 'euw1', 'eune', 'eune1', 'eun1', 'tr', 'tr1', 'ru'],
+  americas: ['na', 'na1', 'br', 'br1', 'lan', 'la1', 'las', 'la2'],
+  asia: ['kr', 'jp', 'jp1', 'oce', 'oc1'],
+  sea: ['ph', 'ph2', 'sg', 'sg2', 'th', 'th2', 'tw', 'tw2', 'vn', 'vn2']
 } as const;
 
 export const REGION_DISPLAY_NAMES = {

@@ -66,7 +66,7 @@ export function useRiotIdValidation(options: UseRiotIdValidationOptions = {}) {
     // Set up debounced server validation
     if (validateOnChange && riotId.trim()) {
       const timer = setTimeout(() => {
-        validateWithServer(riotId, state.region);
+        validateWithServer(riotId);
       }, debounceMs);
       setValidationTimer(timer);
     }
@@ -90,10 +90,9 @@ export function useRiotIdValidation(options: UseRiotIdValidationOptions = {}) {
     });
   }, []);
 
-  // Validate with server
-  const validateWithServer = useCallback(async (riotId?: string, region?: string) => {
+  // Validate with server - account API works globally, backend auto-detects platform
+  const validateWithServer = useCallback(async (riotId?: string) => {
     const targetRiotId = riotId || state.riotId;
-    const targetRegion = region || state.region;
 
     if (!targetRiotId.trim()) {
       return;
@@ -115,16 +114,32 @@ export function useRiotIdValidation(options: UseRiotIdValidationOptions = {}) {
     setState(prev => ({ ...prev, isValidating: true, error: null }));
 
     try {
-      const response = await api.riot.validateRiotId(targetRiotId, targetRegion);
-      
-      setState(prev => ({
-        ...prev,
-        isValidating: false,
-        serverValidation: response,
-        error: response.valid ? null : (response.error || 'Validation failed')
-      }));
+      // Use any region - account API is global and returns PUUID regardless of region
+      // Backend will auto-detect the actual platform using region detection API
+      const response = await api.riot.validateRiotId(targetRiotId, 'americas');
 
-      return response;
+      console.log('🔍 API VALIDATION RESPONSE:', response);
+
+      if (response.valid) {
+        // Backend has detected the correct platform and region
+        console.log('🔍 Setting state with region:', response.region, 'playerData:', response.playerData);
+        setState(prev => ({
+          ...prev,
+          isValidating: false,
+          region: response.region || 'americas',
+          serverValidation: response,
+          error: null
+        }));
+        return response;
+      } else {
+        setState(prev => ({
+          ...prev,
+          isValidating: false,
+          serverValidation: null,
+          error: response.error || 'Player not found. Please check your Riot ID.'
+        }));
+        return null;
+      }
     } catch (error) {
       const apiError = handleApiError(error);
       

@@ -248,23 +248,23 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
       {/* Champion Showcase Section */}
       <section
-        className="py-20 px-4 pl-8 relative bg-cover bg-center"
+        className="py-20 px-4 relative bg-cover bg-center"
         style={{
           backgroundImage: "url('/background-textures.avif')",
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/80 dark:from-background dark:via-background/98 dark:to-background/90" />
 
-        <div className="container mx-auto relative z-10">
+        <div className="container mx-auto relative z-10 px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Content Column */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="space-y-8 pl-8"
+              className="space-y-8 text-center lg:text-left"
             >
-              <div className="flex items-center space-x-4 mb-6">
+              <div className="flex items-center justify-center lg:justify-start space-x-4 mb-6">
                 <img
                   src="/logo-precision-light-mode.png"
                   alt="Precision"
@@ -285,28 +285,28 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                 </span>
               </h2>
 
-              <p className="text-lg text-muted-foreground leading-relaxed mb-8">
+              <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
                 Get champion-specific insights powered by AI analysis of thousands of matches.
                 Learn optimal builds, master matchups, and understand your champion's power spikes
                 to dominate every game.
               </p>
 
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-runesight-accent rounded-full" />
+              <div className="space-y-4 max-w-xl mx-auto lg:mx-0">
+                <div className="flex items-center justify-center lg:justify-start space-x-3">
+                  <div className="w-2 h-2 bg-runesight-accent rounded-full flex-shrink-0" />
                   <span className="text-foreground">Optimal build paths for every matchup</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-runesight-accent rounded-full" />
+                <div className="flex items-center justify-center lg:justify-start space-x-3">
+                  <div className="w-2 h-2 bg-runesight-accent rounded-full flex-shrink-0" />
                   <span className="text-foreground">Power spike timing analysis</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-runesight-accent rounded-full" />
+                <div className="flex items-center justify-center lg:justify-start space-x-3">
+                  <div className="w-2 h-2 bg-runesight-accent rounded-full flex-shrink-0" />
                   <span className="text-foreground">Matchup-specific strategies</span>
                 </div>
               </div>
 
-              <div className="pt-6">
+              <div className="pt-6 flex justify-center lg:justify-start">
                 <RiotButton variant="gold" size="md">
                   Explore Champions
                 </RiotButton>
@@ -318,15 +318,14 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
+              className="relative flex justify-center"
             >
-              <div className="relative">
+              <div className="relative w-full max-w-md lg:max-w-lg">
                 <img
                   src="/irelia.png"
                   alt="Irelia Champion"
-                  className="w-full h-auto max-w-lg mx-auto"
+                  className="w-full h-auto"
                 />
-                {/* Removed gradient overlay */}
               </div>
             </motion.div>
           </div>
@@ -334,7 +333,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 pl-8 bg-slate-900 dark:bg-slate-950 relative overflow-hidden">
+      <section id="features" className="py-20 px-4 bg-slate-900 dark:bg-slate-950 relative overflow-hidden">
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -342,7 +341,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           }} />
         </div>
 
-        <div className="container mx-auto relative z-10 pl-8">
+        <div className="container mx-auto relative z-10">
           <div className="text-center mb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -378,7 +377,9 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.15 }}
                 whileHover={{ y: -10, scale: 1.03 }}
-                className="group relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-slate-700/50 hover:border-amber-500/50 transition-all duration-300 overflow-hidden"
+                className={`group relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-slate-700/50 hover:border-amber-500/50 transition-all duration-300 overflow-hidden ${
+                  index % 2 === 0 ? 'md:ml-0' : 'md:ml-0 ml-4'
+                }`}
                 style={{
                   clipPath: 'polygon(0 0, calc(100% - 16px) 0, 100% 100%, 16px 100%)'
                 }}
@@ -417,7 +418,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       {/* AI Agents Section */}
       <section
         id="agents"
-        className="py-20 px-4 pl-8 relative overflow-hidden"
+        className="py-20 px-4 relative overflow-hidden"
         style={{
           backgroundImage: "url('/background-hero.png')",
           backgroundSize: 'cover',
@@ -456,7 +457,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           />
         </div>
 
-        <div className="container mx-auto relative z-10 pl-8">
+        <div className="container mx-auto relative z-10">
           {/* Section Header */}
           <motion.div
             className="text-center mb-20"
@@ -494,7 +495,9 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: index * 0.1 }}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className="group relative bg-gradient-to-br from-runesight-primary/90 to-runesight-primary/70 backdrop-blur-sm border border-runesight-accent/30 hover:border-runesight-accent/60 transition-all duration-300 overflow-hidden"
+                className={`group relative bg-gradient-to-br from-runesight-primary/90 to-runesight-primary/70 backdrop-blur-sm border border-runesight-accent/30 hover:border-runesight-accent/60 transition-all duration-300 overflow-hidden ${
+                  index % 2 === 0 ? 'md:ml-0' : 'md:ml-0 ml-4'
+                }`}
                 style={{
                   clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 100%, 20px 100%)'
                 }}
@@ -557,8 +560,8 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 px-4 pl-8 bg-muted/30">
-        <div className="container mx-auto pl-8">
+      <section id="testimonials" className="py-20 px-4 bg-muted/30">
+        <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">What Players Say</h2>
             <p className="text-xl text-muted-foreground">
@@ -574,7 +577,9 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                 animate={{ opacity: 1, y: 0, rotateY: 0 }}
                 transition={{ duration: 0.7, delay: index * 0.2 }}
                 whileHover={{ y: -10, rotateY: 5 }}
-                className="group bg-gradient-to-br from-background to-background/90 rounded-2xl p-8 border border-border/50 hover:border-runesight-accent/30 shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden"
+                className={`group bg-gradient-to-br from-background to-background/90 rounded-2xl p-8 border border-border/50 hover:border-runesight-accent/30 shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden ${
+                  index % 2 === 0 ? 'md:ml-0' : 'md:ml-0 ml-4'
+                }`}
                 style={{ transformStyle: 'preserve-3d' }}
               >
                 {/* Quote background decoration */}
@@ -615,13 +620,13 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 pl-8 relative overflow-hidden">
+      <section className="py-20 px-4 relative overflow-hidden">
         {/* Background elements */}
         <div className="absolute inset-0">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-runesight-primary/10 to-runesight-accent/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="container mx-auto text-center relative z-10 pl-8">
+        <div className="container mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -670,8 +675,8 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12 px-4 pl-8 bg-gradient-to-b from-background to-muted/20">
-        <div className="container mx-auto pl-8">
+      <footer className="border-t border-border py-12 px-4 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             {/* Brand Section */}
             <div className="space-y-4">
