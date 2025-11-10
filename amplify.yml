@@ -7,11 +7,8 @@ frontend:
   phases:
     preBuild:
       commands:
-        # Go back to root directory first (in case we're in backend/)
-        - cd $CODEBUILD_SRC_DIR
-        # Debug: Show current directory and contents
-        - pwd
-        - ls -la
+        # Go to the repository root (it's cloned into RuneSight/ subdirectory)
+        - cd $CODEBUILD_SRC_DIR/RuneSight
         # Navigate to frontend directory
         - cd frontend
         # Install dependencies using npm ci for reproducible builds
@@ -38,8 +35,8 @@ backend:
   phases:
     preBuild:
       commands:
-        # Navigate to backend directory
-        - cd backend
+        # Navigate to backend directory (repo is in RuneSight/ subdirectory)
+        - cd $CODEBUILD_SRC_DIR/RuneSight/backend
         # Upgrade pip to latest version
         - pip install --upgrade pip
         # Install Python dependencies
