@@ -1,0 +1,10 @@
+﻿{
+    "storage_type":  "s3",
+    "guides_path":  "guides/",
+    "guides_uploaded":  6,
+    "s3_url":  "s3://runesight-guides-411583550934-eu-central-1/guides/",
+    "https_url":  "https://runesight-guides-411583550934-eu-central-1.s3.eu-central-1.amazonaws.com/guides/",
+    "region":  "eu-central-1",
+    "bucket_name":  "runesight-guides-411583550934-eu-central-1",
+    "upload_date":  "2025-11-10 09:11:01"
+}

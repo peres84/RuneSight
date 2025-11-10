@@ -155,6 +155,91 @@ export const chatStorage = {
   },
 };
 
+// Match data retrieval for chat API
+export const getStoredMatchHistory = (riotId: string, queue?: number): any[] | null => {
+  try {
+    const cacheKey = `runesight_matches_${riotId}_${queue || 'all'}`;
+    const cached = localStorage.getItem(cacheKey);
+    
+    if (!cached) {
+      console.log(`❌ No cached matches found for ${riotId} (queue: ${queue || 'all'})`);
+      return null;
+    }
+    
+    const data = JSON.parse(cached);
+    
+    // Check if cache is still valid (less than 10 minutes old)
+    const cacheAge = Date.now() - (data.timestamp || 0);
+    if (cacheAge >= 10 * 60 * 1000) {
+      console.log(`⏰ Cached matches for ${riotId} expired (${Math.round(cacheAge / 1000 / 60)} minutes old)`);
+      return null;
+    }
+    
+    const matches = data.matches?.matches || data.matches || null;
+    
+    if (matches && Array.isArray(matches)) {
+      console.log(`✅ Found ${matches.length} cached matches for ${riotId}`);
+      return matches;
+    } else {
+      console.log(`❌ Invalid match data structure for ${riotId}:`, data);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error reading match history from cache:', error);
+  }
+  return null;
+};
+
+export const getStoredRankedInfo = (riotId: string): any | null => {
+  try {
+    const cacheKey = `runesight_ranked_${riotId}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const data = JSON.parse(cached);
+      // Check if cache is still valid (less than 30 minutes old)
+      const cacheAge = Date.now() - (data.timestamp || 0);
+      if (cacheAge < 30 * 60 * 1000) {
+        return data.ranked;
+      }
+    }
+  } catch (error) {
+    console.error('Error reading ranked info from cache:', error);
+  }
+  return null;
+};
+
+// User profile storage for chat API
+export const getStoredUserProfile = (riotId: string): any | null => {
+  try {
+    const cacheKey = `runesight_user_profile_${riotId}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const data = JSON.parse(cached);
+      // Check if cache is still valid (less than 30 minutes old)
+      const cacheAge = Date.now() - (data.timestamp || 0);
+      if (cacheAge < 30 * 60 * 1000) {
+        return data.profile;
+      }
+    }
+  } catch (error) {
+    console.error('Error reading user profile from cache:', error);
+  }
+  return null;
+};
+
+export const setStoredUserProfile = (riotId: string, profile: any): void => {
+  try {
+    const cacheKey = `runesight_user_profile_${riotId}`;
+    localStorage.setItem(cacheKey, JSON.stringify({
+      profile,
+      timestamp: Date.now(),
+    }));
+    console.log(`💾 Cached user profile for ${riotId}`);
+  } catch (error) {
+    console.error('Error storing user profile:', error);
+  }
+};
+
 // Utility functions
 export const storage = {
   // Check if localStorage is available

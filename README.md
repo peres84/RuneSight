@@ -119,19 +119,13 @@ RuneSight/
 │   │   │   ├── chat/          # Chat interface
 │   │   │   └── layout/        # Layout components
 │   │   ├── hooks/             # Custom React hooks
-│   │   │   ├── useMatchHistory.ts
-│   │   │   ├── useProgressiveMatchHistory.ts
-│   │   │   └── useRankedInfo.ts
-│   │   ├── lib/               # Utilities
-│   │   │   ├── api.ts         # API client
-│   │   │   ├── errors.ts      # Error handling
-│   │   │   └── storage.ts     # Local storage
+│   │   ├── lib/               # Utilities & API client
 │   │   └── types/             # TypeScript types
 │   └── package.json
 │
 ├── backend/                     # FastAPI application
 │   ├── agents/                 # Strands AI agents
-│   │   ├── base_agent.py
+│   │   ├── base_agent.py      # Bedrock config (IAM role + credentials)
 │   │   ├── performance_agent.py
 │   │   ├── champion_agent.py
 │   │   └── comparison_agent.py
@@ -143,18 +137,18 @@ RuneSight/
 │   │   ├── cache_service.py   # Caching service
 │   │   └── data_processor.py  # Data processing
 │   ├── models/                 # Pydantic models
-│   ├── utils/                  # Utilities
 │   ├── main.py                 # FastAPI app
 │   ├── lambda_handler.py       # Lambda entry point
 │   └── requirements.txt
 │
-├── deployment/                  # Deployment documentation
-│   ├── 00-README.md            # Deployment overview
-│   ├── 01-backend-deployment-guide.md
-│   ├── 02-quick-deployment-steps.md
-│   ├── 03-amplify-deployment-guide.md
-│   ├── deploy-backend-lambda.ps1
-│   └── deploy-amplify-frontend.ps1
+├── deployment/                  # Deployment scripts & docs
+│   ├── deploy-backend.ps1      # Backend deployment (Docker + Lambda)
+│   ├── deploy-frontend.ps1     # Frontend deployment (Amplify)
+│   ├── backend.config.json     # Backend config (gitignored)
+│   ├── frontend.config.json    # Frontend config (gitignored)
+│   ├── *.example.json          # Config templates
+│   ├── SETUP-README.md         # Complete deployment guide
+│   └── README.md               # Quick overview
 │
 ├── images/                      # Screenshots
 └── README.md                    # This file
@@ -166,11 +160,13 @@ RuneSight/
 
 ### Prerequisites
 
-- **Python 3.9+** with pip
+- **Python 3.11+** with pip
 - **Node.js 18+** with npm
-- **AWS CLI** configured
+- **AWS CLI 2.4+** configured
+- **Docker Desktop** (for Lambda deployment)
+- **PowerShell** (not cmd)
 - **Riot Games API key** ([Get one here](https://developer.riotgames.com/))
-- **AWS account** with Bedrock access
+- **AWS account** with Bedrock and Lambda access
 
 ### Local Development
 
@@ -182,7 +178,7 @@ cd backend
 
 # Create virtual environment
 python -m venv venv
-.\venv\Scripts\Activate.ps1  # Windows
+.\venv\Scripts\Activate.ps1  # Windows PowerShell
 # source venv/bin/activate    # Linux/Mac
 
 # Install dependencies
@@ -190,13 +186,15 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your API keys and AWS credentials
 
 # Run development server
 python main.py
 ```
 
 Backend will be available at `http://localhost:8000`
+
+**Note:** For local development, you need AWS credentials in `.env`. In production (Lambda), IAM roles are used automatically.
 
 #### 2. Frontend Setup
 
@@ -206,6 +204,9 @@ cd frontend
 
 # Install dependencies
 npm install
+
+# Configure environment
+# Create .env with VITE_API_URL pointing to your backend
 
 # Run development server
 npm run dev
@@ -219,17 +220,41 @@ Frontend will be available at `http://localhost:5173`
 
 ### Quick Deploy to AWS
 
+**Important:** Use PowerShell (not cmd) and ensure Docker Desktop is running!
+
 ```powershell
-cd deployment
-.\deploy-backend-lambda.ps1      # Deploy backend
-.\deploy-amplify-frontend.ps1    # Deploy frontend
+# 1. Activate virtual environment
+cd backend
+.\venv\Scripts\Activate.ps1
+
+# 2. Deploy backend with Docker (Linux-compatible dependencies)
+cd ..\deployment
+.\deploy-backend.ps1 -UseDocker -SkipLayer -CleanBuild
+
+# 3. Copy the Lambda Function URL from output
+
+# 4. Update frontend config with Lambda URL
+# Edit frontend.config.json with your Lambda URL
+
+# 5. Deploy frontend
+.\deploy-frontend.ps1
+
+# 6. Update backend CORS with Amplify URL
+# Edit backend.config.json and add Amplify URL to ALLOWED_ORIGINS
+.\deploy-backend.ps1 -UpdateEnvOnly
 ```
 
-### Detailed Deployment Guides
+### Deployment Features
 
-- **[Backend Deployment](deployment/01-backend-deployment-guide.md)** - Complete Lambda deployment guide
-- **[Quick Steps](deployment/02-quick-deployment-steps.md)** - Fast deployment reference
-- **[Amplify Deployment](deployment/03-amplify-deployment-guide.md)** - Frontend deployment
+- ✅ **Docker-based builds** - Linux-compatible dependencies for Lambda
+- ✅ **No Lambda layers needed** - All dependencies in function package
+- ✅ **IAM role authentication** - Automatic in production, credentials for local
+- ✅ **Fast updates** - `-UpdateEnvOnly` for environment variable changes
+- ✅ **CORS configuration** - Automatic setup for Amplify integration
+
+### Detailed Deployment Guide
+
+See **[deployment/SETUP-README.md](deployment/SETUP-README.md)** for complete deployment instructions, troubleshooting, and configuration details.
 
 ---
 
@@ -237,22 +262,43 @@ cd deployment
 
 ### Backend Environment Variables
 
+**For Local Development (.env file):**
 ```bash
 # Riot Games API
 RIOT_API_KEY=your_riot_api_key
+
+# AWS Credentials (local development only)
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
 
 # AWS Bedrock
 BEDROCK_REGION=eu-central-1
 BEDROCK_MODEL_ID=your_bedrock_model_arn
 
 # CORS Configuration
-ALLOWED_ORIGINS=https://your-amplify-domain.amplifyapp.com
+ALLOWED_ORIGINS=http://localhost:5173
 
 # Application
-ENVIRONMENT=production
+ENVIRONMENT=development
 PORT=8000
 LOG_LEVEL=INFO
 ```
+
+**For Production (Lambda - backend.config.json):**
+```json
+{
+  "environment": {
+    "RIOT_API_KEY": "your_riot_api_key",
+    "BEDROCK_REGION": "eu-central-1",
+    "BEDROCK_MODEL_ID": "your_bedrock_model_arn",
+    "ALLOWED_ORIGINS": "https://your-amplify-domain.amplifyapp.com",
+    "ENVIRONMENT": "production",
+    "LOG_LEVEL": "INFO"
+  }
+}
+```
+
+**Note:** AWS credentials are NOT needed in Lambda - IAM roles are used automatically.
 
 ### Frontend Environment Variables
 
@@ -405,10 +451,10 @@ The backend implements automatic rate limiting:
 
 ## 📚 Documentation
 
-- **[Deployment Guide](deployment/00-README.md)** - Complete deployment documentation
-- **[Backend Guide](deployment/01-backend-deployment-guide.md)** - Backend deployment details
-- **[Performance Docs](deployment/)** - Performance optimization guides
+- **[Complete Deployment Guide](deployment/SETUP-README.md)** - Full deployment instructions with troubleshooting
+- **[Quick Deployment Overview](deployment/README.md)** - Fast reference guide
 - **[API Documentation](http://localhost:8000/docs)** - Interactive API docs (when running locally)
+- **[CloudWatch Logs](https://console.aws.amazon.com/cloudwatch/)** - Production logs and monitoring
 
 ---
 

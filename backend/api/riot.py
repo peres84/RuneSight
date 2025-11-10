@@ -176,12 +176,24 @@ async def get_match_history(
                 total_matches=0
             )
         
-        # Get match details for each match
-        match_details_list = []
-        for match_id in match_ids:
-            match_data = client.get_match_details(match_id)
-            if match_data:
-                match_details_list.append(match_data)
+        # Get match details for each match IN PARALLEL
+        import asyncio
+        from concurrent.futures import ThreadPoolExecutor
+        
+        def fetch_match(match_id):
+            """Fetch a single match (runs in thread pool)"""
+            try:
+                return client.get_match_details(match_id)
+            except Exception as e:
+                print(f"Error fetching match {match_id}: {e}")
+                return None
+        
+        # Fetch all matches in parallel using thread pool
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            match_details_list = list(executor.map(fetch_match, match_ids))
+        
+        # Filter out None values
+        match_details_list = [m for m in match_details_list if m is not None]
         
         # Format match history
         formatted_matches = format_match_history(
@@ -361,3 +373,52 @@ async def clear_cache():
     from services.cache_service import clear_cache
     clear_cache()
     return {"status": "success", "message": "Cache cleared"}
+
+
+@router.post("/profile/generate")
+async def generate_user_profile(
+    riot_id: str = Query(..., description="RiotID in format 'gameName#tagLine'"),
+    region: str = Query(default="EUROPE", description="Regional routing"),
+    platform: str = Query(default="EUW1", description="Platform routing")
+):
+    """
+    Generate a comprehensive user profile from cached match data.
+    This endpoint should be called after fetching match history to create
+    a profile that can be saved to localStorage.
+    
+    Args:
+        riot_id: RiotID in format 'gameName#tagLine'
+        region: Regional routing
+        platform: Platform routing
+    
+    Returns:
+        Comprehensive user profile with stats, rank, champions, etc.
+    """
+    # Rate limiting
+    if not check_rate_limit(riot_id):
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded. Please try again later."
+        )
+    
+    try:
+        from tools.user_profile_tool import get_user_profile
+        
+        # Generate profile (this will fetch fresh data)
+        profile = get_user_profile(riot_id, match_count=50)
+        
+        if "error" in profile:
+            raise HTTPException(
+                status_code=404,
+                detail=profile["error"]
+            )
+        
+        return profile
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating profile: {str(e)}"
+        )

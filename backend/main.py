@@ -84,10 +84,11 @@ async def health_check():
     }
 
 # Import and include routers
-from api import riot, analysis
+from api import riot, analysis, chat
 
 app.include_router(riot.router, prefix="/api/riot", tags=["riot"])
 app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 if __name__ == "__main__":
     import uvicorn

@@ -25,6 +25,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         return 'text-purple-600 dark:text-purple-400';
       case 'comparison':
         return 'text-green-600 dark:text-green-400';
+      case 'team_synergy':
+        return 'text-yellow-600 dark:text-yellow-400';
+      case 'summary':
+        return 'text-pink-600 dark:text-pink-400';
       default:
         return 'text-gray-600 dark:text-gray-400';
     }
@@ -33,13 +37,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const getAgentName = () => {
     switch (message.agentType) {
       case 'performance':
-        return 'Performance Analyst';
+        return '📊 Performance Analyst';
       case 'champion_expert':
-        return 'Champion Expert';
+        return '⚔️ Champion Expert';
       case 'comparison':
-        return 'Comparison Analyst';
+        return '🔄 Comparison Analyst';
+      case 'team_synergy':
+        return '👥 Team Synergy Specialist';
+      case 'summary':
+        return '📝 Match Summarizer';
       default:
-        return 'AI Assistant';
+        return '🤖 AI Assistant';
     }
   };
 
@@ -123,13 +131,32 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           </span>
 
           {/* Metadata (for agent messages) */}
-          {message.metadata && Object.keys(message.metadata).length > 0 && (
-            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              {message.metadata.match_id && (
-                <span>Match: {message.metadata.match_id}</span>
+          {isAgent && message.metadata && (
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              {message.metadata.agent_used && typeof message.metadata.agent_used === 'string' && (
+                <span className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">
+                  Agent: {message.metadata.agent_used}
+                </span>
               )}
-              {message.metadata.champion && (
-                <span> • Champion: {message.metadata.champion}</span>
+              {message.metadata.used_cache === true && (
+                <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded flex items-center gap-1">
+                  ⚡ Fast (cached data)
+                </span>
+              )}
+              {message.metadata.matches_provided && message.metadata.matches_provided > 0 && (
+                <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+                  {message.metadata.matches_provided} matches analyzed
+                </span>
+              )}
+              {message.metadata.match_id && typeof message.metadata.match_id === 'string' && (
+                <span className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">
+                  Match: {message.metadata.match_id}
+                </span>
+              )}
+              {message.metadata.champion && typeof message.metadata.champion === 'string' && (
+                <span className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">
+                  Champion: {message.metadata.champion}
+                </span>
               )}
             </div>
           )}

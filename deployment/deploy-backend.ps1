@@ -27,6 +27,9 @@ param(
     [switch]$UseDocker,
     
     [Parameter(Mandatory=$false)]
+    [switch]$SetupGuides,
+    
+    [Parameter(Mandatory=$false)]
     [ValidateSet("1", "2", "3", "4", "5", "6")]
     [string]$StartFromStep
 )
@@ -43,6 +46,20 @@ Write-Host "========================================================" -Foregroun
 Write-Host "  RuneSight Backend Complete Deployment" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
+
+# Setup guides if requested
+if ($SetupGuides) {
+    Write-Step "Setting up League of Legends guides in S3..."
+    
+    $guidesScript = Join-Path $PSScriptRoot "create_kb_simple.ps1"
+    if (Test-Path $guidesScript) {
+        & $guidesScript
+        Write-Success "Guides setup complete"
+        Write-Host ""
+    } else {
+        Write-Warning "Guides setup script not found: $guidesScript"
+    }
+}
 
 # Check if config file exists
 if (-not (Test-Path $ConfigFile)) {

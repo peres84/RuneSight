@@ -17,7 +17,10 @@ import { ScrollToTop } from '../ui/ScrollToTop';
 import { RiotButton } from '../ui/RiotButton';
 import { useMatchHistory } from '../../hooks/useMatchHistory';
 import { useRankedInfo } from '../../hooks/useRankedInfo';
+import { generateUserProfileFromCache } from '../../lib/profileGenerator';
+import { setStoredUserProfile } from '../../lib/storage';
 import type { UserProfile } from '../../types';
+import { useEffect } from 'react';
 
 interface DashboardProps {
   profile: UserProfile;
@@ -114,6 +117,31 @@ export function Dashboard({ profile, onNavigateToChat }: DashboardProps) {
     region: profile.region || 'EUROPE',
     enabled: !!profile.riotId
   });
+
+  // Generate and cache user profile from match data (no additional API call needed)
+  useEffect(() => {
+    if (matchHistory?.matches && rankedInfo) {
+      try {
+        console.log('🔄 Generating user profile from cached data...', {
+          matches: matchHistory.matches.length,
+          rankedData: rankedInfo.ranked_data || rankedInfo
+        });
+        
+        const userProfile = generateUserProfileFromCache(
+          profile.riotId,
+          matchHistory.matches as any,
+          (rankedInfo.ranked_data || rankedInfo) as any
+        );
+        
+        if (userProfile) {
+          setStoredUserProfile(profile.riotId, userProfile);
+          console.log('✅ User profile generated and cached for AI agents:', userProfile);
+        }
+      } catch (error) {
+        console.error('❌ Error generating user profile:', error);
+      }
+    }
+  }, [matchHistory, rankedInfo, profile.riotId]);
 
   // Debug logging
   console.log('Ranked Info:', rankedInfo);

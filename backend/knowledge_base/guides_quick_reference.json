@@ -1,0 +1,170 @@
+{
+  "guides": [
+    {
+      "id": 1,
+      "file": "01_LoL_Master_Guide.md",
+      "title": "Master Guide & Navigation",
+      "description": "Entry point with learning paths, navigation by playstyle, terminology glossary, and recommended progressions for different skill levels."
+    },
+    {
+      "id": 2,
+      "file": "02_Game_Fundamentals.md",
+      "title": "Game Fundamentals & Core Mechanics",
+      "description": "Foundation covering map structure, 5 roles, experience, gold, items, structures (turrets/inhibitors/nexus), Dragon/Baron, minions, vision control, and winning conditions."
+    },
+    {
+      "id": 3,
+      "file": "03_Farming_and_Economy.md",
+      "title": "Farming, CS & Wave Control",
+      "description": "Complete guide to last-hitting, CS benchmarks by rank, 3 wave control strategies (push/freeze/slow-push), farming efficiency, role-specific farming, and 5 progressive practice drills."
+    },
+    {
+      "id": 4,
+      "file": "04_Micro_vs_Macro.md",
+      "title": "Micro vs Macro: Mechanics vs Strategy",
+      "description": "Balance between individual mechanics (micro) and strategic decision-making (macro), including role-specific ratios (Top 60/40, Jungle 40/60, Mid 50/50, ADC 70/30, Support 30/70) and integration strategies."
+    },
+    {
+      "id": 5,
+      "file": "05_Team_Composition.md",
+      "title": "Team Composition & Synergies",
+      "description": "Build balanced teams using 6 essential elements, 5 synergy types (engage/poke/protect/dive/split-push), win conditions, and counter-composition strategies with 4 detailed examples."
+    },
+    {
+      "id": 6,
+      "file": "06_Professional_Drafting.md",
+      "title": "Professional Drafting & Pick/Ban Strategy",
+      "description": "Pro-level drafting guide covering 10-ban system, 4 banning strategies, 4 picking strategies, phase breakdown (B1-R5), Blue vs Red advantages, and professional team styles."
+    },
+    {
+      "id": 7,
+      "file": "README.md",
+      "title": "Comprehensive Index & Integration",
+      "description": "Master index with content statistics, 4 learning paths, AI feedback templates, metrics tracking, and integration guidelines for AI coaching systems."
+    }
+  ],
+  
+  "learning_paths": [
+    {
+      "name": "Beginner",
+      "files": [1, 2, 3, 4],
+      "weeks": 4,
+      "focus": "Core mechanics and farming fundamentals"
+    },
+    {
+      "name": "Intermediate",
+      "files": [1, 4, 5, 3, 6],
+      "weeks": 4,
+      "focus": "Strategy and team composition"
+    },
+    {
+      "name": "Advanced",
+      "files": [1, 6, 5, 4, 3],
+      "weeks": 3,
+      "focus": "Professional strategy and optimization"
+    },
+    {
+      "name": "Comprehensive",
+      "files": [1, 2, 3, 4, 5, 6],
+      "weeks": 8,
+      "focus": "Complete mastery of all aspects"
+    }
+  ],
+  
+  "keywords": {
+    "cs": [3, 4],
+    "farming": [3, 4],
+    "wave_control": [3, 4],
+    "wave_management": [3, 4],
+    "last_hit": [3, 4],
+    "gold": [3, 2],
+    "economy": [3],
+    "micro": [4],
+    "macro": [4],
+    "mechanics": [4, 2],
+    "strategy": [4, 5, 6],
+    "decision_making": [4, 6],
+    "team_composition": [5, 6],
+    "synergy": [5, 6],
+    "draft": [6, 5],
+    "picking": [6, 5],
+    "banning": [6],
+    "draft_phase": [6],
+    "roles": [2, 4, 5, 6],
+    "objectives": [2, 4, 6],
+    "dragon": [2, 4],
+    "baron": [2, 4],
+    "vision": [2, 4],
+    "map_awareness": [4, 2],
+    "positioning": [4, 5],
+    "fundamentals": [2, 1],
+    "beginner": [2, 3, 1],
+    "intermediate": [4, 5],
+    "advanced": [6, 4],
+    "minions": [2, 3],
+    "turrets": [2],
+    "inhibitors": [2],
+    "nexus": [2],
+    "items": [2, 3],
+    "scaling": [5],
+    "early_game": [5, 6],
+    "mid_game": [5, 6],
+    "late_game": [5, 3],
+    "teamfight": [2, 4, 5],
+    "pressure": [3, 4],
+    "gank": [3, 6],
+    "roam": [4, 6],
+    "wave_push": [3],
+    "freeze": [3],
+    "slow_push": [3],
+    "champion_pool": [6],
+    "counter_pick": [6, 5],
+    "meta": [6, 2],
+    "pro": [6],
+    "professional": [6],
+    "rating": [5],
+    "comp": [5, 6]
+  },
+  
+  "topics_by_file": {
+    "1": ["navigation", "learning paths", "terminology", "overview"],
+    "2": ["mechanics", "roles", "map", "objectives", "experience", "gold", "items", "structures", "dragon", "baron", "minions", "vision", "teamfighting"],
+    "3": ["last-hitting", "CS", "farming", "wave control", "push", "freeze", "slow-push", "efficiency", "role-specific", "practice"],
+    "4": ["micro", "macro", "mechanics", "strategy", "decision-making", "map awareness", "objective priority", "rotations", "role ratios"],
+    "5": ["team composition", "balance", "elements", "synergies", "engage", "poke", "protect", "dive", "split-push", "win conditions", "examples"],
+    "6": ["draft", "picking", "banning", "phase breakdown", "blue vs red", "strategies", "professional", "styles", "examples"]
+  },
+  
+  "usage_examples": [
+    {
+      "question": "How can I improve my CS?",
+      "files": [3],
+      "key_sections": ["last-hitting mechanics", "CS benchmarks", "practice drills"]
+    },
+    {
+      "question": "What should we ban?",
+      "files": [6],
+      "key_sections": ["banning strategies", "meta picks", "team-specific threats"]
+    },
+    {
+      "question": "I'm new to League",
+      "files": [1, 2, 3, 4],
+      "key_sections": ["beginner path", "fundamentals", "farming basics", "micro/macro intro"]
+    },
+    {
+      "question": "How do I understand wave management?",
+      "files": [3, 4],
+      "key_sections": ["push strategy", "freeze strategy", "slow-push", "macro implications"]
+    },
+    {
+      "question": "How do pro teams draft?",
+      "files": [6],
+      "key_sections": ["pick/ban order", "strategies", "professional examples", "phase analysis"]
+    },
+    {
+      "question": "I want to learn my role",
+      "files": [2, 3, 4, 5, 6],
+      "key_sections": ["role descriptions", "economy management", "micro/macro ratios", "team needs", "draft picks"]
+    }
+  ]
+}

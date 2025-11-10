@@ -6,10 +6,11 @@ analyzing duo synergies, and providing comparative insights.
 """
 
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from strands import Agent, tool
 from services.riot_api_client import RiotAPIClient
 from agents.base_agent import create_bedrock_model
+from tools.user_profile_tool import get_user_profile, get_user_profile_from_cache
 
 
 # Initialize services
@@ -35,8 +36,59 @@ def compare_players(riot_ids: List[str], match_count: int = 10) -> Dict[str, Any
         if len(riot_ids) > 5:
             return {"error": "Maximum 5 players can be compared at once"}
         
-        player_stats = []
+        # Fetch all player profiles in parallel for maximum speed
+        from concurrent.futures import ThreadPoolExecutor
         
+        def fetch_player_profile(riot_id):
+            """Fetch a single player profile (runs in thread pool)"""
+            try:
+                logging.info(f"Fetching profile for {riot_id}")
+                profile = get_user_profile(riot_id, match_count=match_count)
+                return profile
+            except Exception as e:
+                logging.error(f"Error fetching profile for {riot_id}: {e}")
+                return {"riot_id": riot_id, "error": str(e)}
+        
+        # Fetch all profiles in parallel
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            player_stats = list(executor.map(fetch_player_profile, riot_ids))
+        
+        # Filter out errors and format for comparison
+        valid_players = []
+        for profile in player_stats:
+            if "error" in profile:
+                valid_players.append(profile)
+                continue
+            
+            # Extract key stats from profile for comparison
+            avg_stats = profile.get('average_stats', {})
+            ranked_solo = profile.get('ranked_solo', {})
+            ranked_flex = profile.get('ranked_flex', {})
+            most_played = profile.get('most_played_champions', [])
+            preferred_roles = profile.get('preferred_roles', [])
+            
+            valid_players.append({
+                "riot_id": profile.get('riot_id'),
+                "summoner_level": profile.get('summoner_level', 0),
+                "ranked_solo": f"{ranked_solo.get('tier', 'UNRANKED')} {ranked_solo.get('rank', '')}".strip(),
+                "ranked_flex": f"{ranked_flex.get('tier', 'UNRANKED')} {ranked_flex.get('rank', '')}".strip(),
+                "games_analyzed": profile.get('matches_analyzed', 0),
+                "avg_kda": avg_stats.get('kda', 'N/A'),
+                "avg_kda_ratio": avg_stats.get('kda_ratio', 0),
+                "avg_cs": avg_stats.get('cs', 0),
+                "avg_cs_per_minute": avg_stats.get('cs_per_minute', 0),
+                "avg_gold": avg_stats.get('gold', 0),
+                "avg_damage": avg_stats.get('damage', 0),
+                "avg_vision_score": avg_stats.get('vision_score', 0),
+                "most_played_champions": [c['champion'] for c in most_played[:3]],
+                "preferred_roles": [r['role'] for r in preferred_roles[:2]],
+                "queue_statistics": profile.get('queue_statistics', [])
+            })
+        
+        player_stats = valid_players
+        
+        # OLD CODE REMOVED - Now using get_user_profile tool
+        """
         for riot_id in riot_ids:
             # Parse RiotID
             if '#' not in riot_id:
@@ -59,76 +111,7 @@ def compare_players(riot_ids: List[str], match_count: int = 10) -> Dict[str, Any
             
             # Get recent matches
             match_ids = riot_client.get_matches_by_puuid(puuid, count=match_count)
-            
-            if not match_ids:
-                player_stats.append({
-                    "riot_id": riot_id,
-                    "error": "No matches found"
-                })
-                continue
-            
-            # Aggregate stats
-            total_games = len(match_ids)
-            wins = 0
-            total_kills = 0
-            total_deaths = 0
-            total_assists = 0
-            total_damage = 0
-            total_gold = 0
-            total_cs = 0
-            total_vision = 0
-            champion_counts = {}
-            role_counts = {}
-            
-            for match_id in match_ids:
-                match_data = riot_client.get_match_details(match_id)
-                if not match_data:
-                    continue
-                
-                participants = match_data.get('info', {}).get('participants', [])
-                for participant in participants:
-                    if participant.get('puuid') == puuid:
-                        wins += 1 if participant.get('win', False) else 0
-                        total_kills += participant.get('kills', 0)
-                        total_deaths += participant.get('deaths', 0)
-                        total_assists += participant.get('assists', 0)
-                        total_damage += participant.get('totalDamageDealtToChampions', 0)
-                        total_gold += participant.get('goldEarned', 0)
-                        total_cs += participant.get('totalMinionsKilled', 0) + participant.get('neutralMinionsKilled', 0)
-                        total_vision += participant.get('visionScore', 0)
-                        
-                        champion = participant.get('championName', 'Unknown')
-                        champion_counts[champion] = champion_counts.get(champion, 0) + 1
-                        
-                        role = participant.get('teamPosition', 'Unknown')
-                        role_counts[role] = role_counts.get(role, 0) + 1
-                        break
-            
-            # Calculate averages
-            avg_kda = (total_kills + total_assists) / max(total_deaths, 1)
-            win_rate = (wins / total_games * 100) if total_games > 0 else 0
-            
-            # Find most played
-            most_played_champion = max(champion_counts.items(), key=lambda x: x[1])[0] if champion_counts else "None"
-            most_played_role = max(role_counts.items(), key=lambda x: x[1])[0] if role_counts else "None"
-            
-            player_stats.append({
-                "riot_id": riot_id,
-                "games_analyzed": total_games,
-                "wins": wins,
-                "losses": total_games - wins,
-                "win_rate": round(win_rate, 1),
-                "avg_kills": round(total_kills / total_games, 1) if total_games > 0 else 0,
-                "avg_deaths": round(total_deaths / total_games, 1) if total_games > 0 else 0,
-                "avg_assists": round(total_assists / total_games, 1) if total_games > 0 else 0,
-                "avg_kda": round(avg_kda, 2),
-                "avg_damage": round(total_damage / total_games, 0) if total_games > 0 else 0,
-                "avg_gold": round(total_gold / total_games, 0) if total_games > 0 else 0,
-                "avg_cs": round(total_cs / total_games, 1) if total_games > 0 else 0,
-                "avg_vision_score": round(total_vision / total_games, 1) if total_games > 0 else 0,
-                "most_played_champion": most_played_champion,
-                "most_played_role": most_played_role,
-            })
+        """
         
         return {
             "comparison_type": "multi_player",
@@ -364,6 +347,13 @@ class ComparisonAgent:
 
 Your role is to compare player performance, analyze duo synergies, and provide insights on player matchups.
 
+**CRITICAL - Automatic Data Fetching**:
+- When a user provides a RiotID (format: gameName#tagLine), **IMMEDIATELY use compare_players or get_user_profile tool** to fetch their data
+- **NEVER ask the user if you should fetch data or use cache** - just do it automatically
+- **Be decisive**: If cached data exists, use it. If not, fetch fresh data. Don't ask permission.
+- If cached data is available for one player but not another, fetch the missing player's data
+- You have the tools to get any player's data - use them proactively without asking
+
 When comparing players:
 1. **Fair Comparison**: Consider context like role, champion pool, and playstyle
 2. **Strengths & Weaknesses**: Identify what each player excels at
@@ -387,7 +377,13 @@ Provide specific, actionable insights that help players understand their relativ
         self.model = create_bedrock_model(temperature=0.3, streaming=False)
         self.agent = Agent(
             model=self.model,
-            tools=[compare_players, analyze_duo_synergy, get_head_to_head],
+            tools=[
+                compare_players, 
+                analyze_duo_synergy, 
+                get_head_to_head,
+                get_user_profile,
+                get_user_profile_from_cache
+            ],
             system_prompt=self.SYSTEM_PROMPT
         )
     
@@ -481,19 +477,46 @@ Use the get_head_to_head tool to retrieve the data."""
             logging.error(f"Error in analyze_head_to_head: {e}")
             return f"Error analyzing head-to-head: {str(e)}"
     
-    def custom_query(self, query: str) -> str:
+    def custom_query(self, query: str, match_data: Optional[List[dict]] = None) -> str:
         """
         Handle custom comparison-related queries.
         
         Args:
             query: Natural language query about player comparisons
+            match_data: Optional pre-fetched match data from frontend (avoids API calls)
             
         Returns:
             AI-generated response to the query
         """
         try:
-            result = self.agent(query)
+            # If match data is provided, analyze it directly
+            if match_data and len(match_data) > 0:
+                # Extract riot_id from first match if available
+                riot_id = match_data[0].get('riot_id') or match_data[0].get('riotId') or "the player"
+                
+                # Call analyze_provided_matches to get stats
+                from tools.user_profile_tool import get_user_profile_from_cache
+                
+                # Try to get cached profile first
+                profile_data = get_user_profile_from_cache(riot_id, match_data)
+                
+                # Build enhanced query with the data
+                enhanced_query = f"""{query}
+
+CACHED DATA FOR {riot_id}:
+- Games Analyzed: {profile_data.get('matches_analyzed', 0)}
+- Win Rate: {profile_data.get('queue_statistics', [{}])[0].get('win_rate', 0) if profile_data.get('queue_statistics') else 0}%
+- Average KDA: {profile_data.get('average_stats', {}).get('kda_ratio', 0)}
+- Average CS: {profile_data.get('average_stats', {}).get('cs', 0)}
+- Rank: {profile_data.get('ranked_solo', {}).get('tier', 'UNRANKED')} {profile_data.get('ranked_solo', {}).get('rank', '')}
+
+Use this data to answer the user's question. If comparing with another player, fetch their data using compare_players or get_user_profile tools."""
+                
+                result = self.agent(enhanced_query)
+            else:
+                result = self.agent(query)
+            
             return result.message['content'][0]['text']
         except Exception as e:
             logging.error(f"Error in custom_query: {e}")
-            return f"Error processing query: {str(e)}"
+            raise Exception(f"AI analysis failed: {str(e)}")

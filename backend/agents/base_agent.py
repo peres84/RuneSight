@@ -29,30 +29,45 @@ class BedrockConfig:
     @classmethod
     def get_session(cls) -> boto3.Session:
         """
-        Get or create AWS boto3 session with credentials from environment.
+        Get or create AWS boto3 session.
+        
+        In Lambda (production): Uses IAM role automatically
+        In local development: Uses explicit credentials from environment
         
         Returns:
             Configured boto3 Session
             
         Raises:
-            ValueError: If required AWS credentials are not found in environment
+            ValueError: If running locally without credentials
         """
         if cls._session is None:
-            aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
-            aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-            aws_region = os.getenv("AWS_REGION", "eu-central-1")
+            # Check if running in Lambda (AWS_LAMBDA_FUNCTION_NAME is set by Lambda)
+            is_lambda = os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None
             
-            if not aws_access_key_id or not aws_secret_access_key:
-                raise ValueError(
-                    "AWS credentials not found. Please set AWS_ACCESS_KEY_ID "
-                    "and AWS_SECRET_ACCESS_KEY environment variables."
+            if is_lambda:
+                # Running in Lambda - use IAM role (no explicit credentials needed)
+                aws_region = os.getenv("BEDROCK_REGION", "eu-central-1")
+                cls._session = boto3.Session(region_name=aws_region)
+                logging.info("✅ Using Lambda IAM role for AWS authentication")
+            else:
+                # Running locally - use explicit credentials
+                aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+                aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+                aws_region = os.getenv("BEDROCK_REGION", "eu-central-1")
+                
+                if not aws_access_key_id or not aws_secret_access_key:
+                    raise ValueError(
+                        "Running locally: AWS credentials not found. "
+                        "Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY "
+                        "in your .env file for local development."
+                    )
+                
+                cls._session = boto3.Session(
+                    aws_access_key_id=aws_access_key_id,
+                    aws_secret_access_key=aws_secret_access_key,
+                    region_name=aws_region
                 )
-            
-            cls._session = boto3.Session(
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-                region_name=aws_region
-            )
+                logging.info("✅ Using explicit AWS credentials for local development")
             
             # Verify credentials are valid
             try:

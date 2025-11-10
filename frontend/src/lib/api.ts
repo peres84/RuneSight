@@ -359,23 +359,91 @@ export const analysisApi = {
   },
 };
 
+// ==================== Chat API Functions ====================
+
+export interface ChatMessage {
+  message: string;
+  session_id?: string;
+  riot_id?: string;
+  match_data?: any[];
+  ranked_data?: any;
+  user_profile?: any;
+  force_agent?: 'performance' | 'champion' | 'comparison' | 'team_synergy' | 'match_summarizer';
+}
+
+export interface ChatResponse {
+  response: string;
+  session_id: string;
+  agent_used: string;
+  confidence: number;
+  conversation_length: number;
+  metadata: Record<string, any>;
+}
+
+export const chatApi = {
+  /**
+   * Send a message to the AI chat assistant
+   * Automatically routes to the best agent based on query
+   */
+  sendMessage: async (options: ChatMessage): Promise<ChatResponse> => {
+    const response = await apiClient.post<ChatResponse>('/api/chat/message', options);
+    return response.data;
+  },
+
+  /**
+   * Get conversation history for a session
+   */
+  getHistory: async (sessionId: string): Promise<any> => {
+    const response = await apiClient.get(`/api/chat/history/${sessionId}`);
+    return response.data;
+  },
+
+  /**
+   * Clear conversation history
+   */
+  clearHistory: async (sessionId: string): Promise<any> => {
+    const response = await apiClient.delete(`/api/chat/history/${sessionId}`);
+    return response.data;
+  },
+
+  /**
+   * Get available agents info
+   */
+  getAgents: async (): Promise<any> => {
+    const response = await apiClient.get('/api/chat/agents');
+    return response.data;
+  },
+
+  /**
+   * Health check
+   */
+  healthCheck: async (): Promise<any> => {
+    const response = await apiClient.get('/api/chat/health');
+    return response.data;
+  },
+};
+
 // ==================== Combined API Export ====================
 
 export const api = {
+  baseURL: API_BASE_URL,
   riot: riotApi,
   analysis: analysisApi,
+  chat: chatApi,
   
   /**
    * General health check
    */
   healthCheck: async (): Promise<any> => {
-    const [riotHealth, analysisHealth] = await Promise.all([
+    const [riotHealth, analysisHealth, chatHealth] = await Promise.all([
       riotApi.healthCheck(),
       analysisApi.healthCheck(),
+      chatApi.healthCheck(),
     ]);
     return {
       riot: riotHealth,
       analysis: analysisHealth,
+      chat: chatHealth,
     };
   },
 };

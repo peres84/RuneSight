@@ -20,6 +20,7 @@ interface ProgressiveMatchData {
   all: MatchHistoryResponse | undefined;
   rankedSolo: MatchHistoryResponse | undefined;
   rankedFlex: MatchHistoryResponse | undefined;
+  normal: MatchHistoryResponse | undefined;
   aram: MatchHistoryResponse | undefined;
   isInitialLoading: boolean;
   isBackgroundLoading: boolean;
@@ -31,7 +32,8 @@ const QUEUE_CONFIGS = [
   { key: 'all', queueId: undefined, priority: 1 },
   { key: 'rankedSolo', queueId: 420, priority: 2 },
   { key: 'rankedFlex', queueId: 440, priority: 3 },
-  { key: 'aram', queueId: 450, priority: 4 },
+  { key: 'normal', queueId: 400, priority: 4 },
+  { key: 'aram', queueId: 450, priority: 5 },
 ] as const;
 
 // LocalStorage cache helpers
@@ -175,7 +177,8 @@ export function useProgressiveMatchHistory({
     all: fullQuery.data || initialQuery.data,
     rankedSolo: queueQueries[0]?.data,
     rankedFlex: queueQueries[1]?.data,
-    aram: queueQueries[2]?.data,
+    normal: queueQueries[2]?.data,
+    aram: queueQueries[3]?.data,
     isInitialLoading,
     isBackgroundLoading,
     progress,

@@ -6,11 +6,13 @@ and providing actionable improvement recommendations.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from strands import Agent, tool
 from services.riot_api_client import RiotAPIClient
 from services import data_processor
 from agents.base_agent import create_bedrock_model
+from tools.user_profile_tool import get_user_profile, get_user_profile_from_cache
+from tools.guides_tool import search_lol_guides, get_guide_summary
 
 
 # Initialize services
@@ -104,6 +106,69 @@ def get_match_performance(match_id: str, riot_id: str) -> Dict[str, Any]:
         
     except Exception as e:
         logging.error(f"Error getting match performance: {e}")
+        return {"error": str(e)}
+
+
+@tool
+def analyze_provided_matches(match_data: List[dict], riot_id: str) -> Dict[str, Any]:
+    """
+    Analyze matches using data provided by the frontend (no API calls needed).
+    This is much faster as it uses cached data from the user's browser.
+    
+    Args:
+        match_data: List of match objects from frontend localStorage
+        riot_id: Player's RiotID
+        
+    Returns:
+        Performance summary without making any API calls
+    """
+    try:
+        if not match_data:
+            return {"error": "No match data provided"}
+        
+        total_games = len(match_data)
+        wins = sum(1 for m in match_data if m.get('win', False))
+        
+        # Calculate averages from provided data
+        total_kills = sum(m.get('kills', 0) for m in match_data)
+        total_deaths = sum(m.get('deaths', 0) for m in match_data)
+        total_assists = sum(m.get('assists', 0) for m in match_data)
+        total_damage = sum(m.get('totalDamageDealtToChampions', 0) for m in match_data)
+        total_gold = sum(m.get('goldEarned', 0) for m in match_data)
+        total_cs = sum(m.get('totalMinionsKilled', 0) + m.get('neutralMinionsKilled', 0) for m in match_data)
+        total_vision = sum(m.get('visionScore', 0) for m in match_data)
+        
+        # Champion frequency
+        champion_counts = {}
+        for match in match_data:
+            champ = match.get('championName', 'Unknown')
+            champion_counts[champ] = champion_counts.get(champ, 0) + 1
+        
+        most_played = max(champion_counts.items(), key=lambda x: x[1]) if champion_counts else ("None", 0)
+        
+        avg_kda = (total_kills + total_assists) / max(total_deaths, 1)
+        win_rate = (wins / total_games * 100) if total_games > 0 else 0
+        
+        return {
+            "riot_id": riot_id,
+            "games_analyzed": total_games,
+            "wins": wins,
+            "losses": total_games - wins,
+            "win_rate": round(win_rate, 1),
+            "avg_kills": round(total_kills / total_games, 1) if total_games > 0 else 0,
+            "avg_deaths": round(total_deaths / total_games, 1) if total_games > 0 else 0,
+            "avg_assists": round(total_assists / total_games, 1) if total_games > 0 else 0,
+            "avg_kda": round(avg_kda, 2),
+            "avg_damage": round(total_damage / total_games, 0) if total_games > 0 else 0,
+            "avg_gold": round(total_gold / total_games, 0) if total_games > 0 else 0,
+            "avg_cs": round(total_cs / total_games, 1) if total_games > 0 else 0,
+            "avg_vision_score": round(total_vision / total_games, 1) if total_games > 0 else 0,
+            "most_played_champion": most_played[0],
+            "most_played_games": most_played[1],
+            "data_source": "frontend_cache"
+        }
+    except Exception as e:
+        logging.error(f"Error analyzing provided matches: {e}")
         return {"error": str(e)}
 
 
@@ -215,6 +280,15 @@ class PerformanceAgent:
 
 Your role is to analyze player performance data and provide specific, actionable feedback to help players improve their gameplay.
 
+**CRITICAL - Data Usage Rules**:
+1. **If "CACHED DATA AVAILABLE" or "USER PROFILE" appears in the query context, use that data IMMEDIATELY**
+2. **NEVER ask the user if you should use cached vs fresh data - just use what's available**
+3. **If cached data exists, use analyze_provided_matches or get_user_profile_from_cache tools**
+4. **If no cached data exists, automatically fetch fresh data with get_user_profile**
+5. **Be decisive - don't ask permission, just analyze**
+
+This is critical for performance - using cached data is 10x faster and avoids rate limits!
+
 When analyzing performance:
 1. **Identify Strengths**: Highlight what the player did well with specific metrics
 2. **Pinpoint Weaknesses**: Identify clear areas for improvement with data-backed reasoning
@@ -231,14 +305,32 @@ Key metrics to analyze:
 - Item builds and timing
 
 Always provide concrete examples and specific numbers when giving feedback.
-Be conversational but professional, like a coach talking to a player."""
+Be conversational but professional, like a coach talking to a player.
+
+**CRITICAL - Knowledge Base Usage**:
+- You have access to League of Legends strategy guides via search_lol_guides tool
+- **ALWAYS search the knowledge base when users ask about:**
+  - CS benchmarks, farming, wave management
+  - Game fundamentals, macro/micro concepts
+  - Team composition, drafting strategies
+  - Any educational/learning questions
+- Use search_lol_guides BEFORE giving advice on these topics
+- The knowledge base has accurate, detailed information that supplements your analysis"""
     
     def __init__(self):
         """Initialize the Performance Analysis Agent"""
         self.model = create_bedrock_model(temperature=0.3, streaming=False)
         self.agent = Agent(
             model=self.model,
-            tools=[get_match_performance, get_recent_performance_summary],
+            tools=[
+                get_match_performance, 
+                get_recent_performance_summary, 
+                analyze_provided_matches,
+                get_user_profile,
+                get_user_profile_from_cache,
+                search_lol_guides,
+                get_guide_summary
+            ],
             system_prompt=self.SYSTEM_PROMPT
         )
     
@@ -300,18 +392,74 @@ Use the get_recent_performance_summary tool to retrieve the data."""
             logging.error(f"Error in analyze_recent_performance: {e}")
             return f"Error analyzing recent performance: {str(e)}"
     
-    def custom_query(self, query: str) -> str:
+    def custom_query(self, query: str, match_data: Optional[List[dict]] = None) -> str:
         """
         Handle custom performance-related queries.
         
         Args:
             query: Natural language query about player performance
+            match_data: Optional pre-fetched match data from frontend (avoids API calls)
             
         Returns:
             AI-generated response to the query
         """
         try:
-            result = self.agent(query)
+            # If match data is provided, analyze it with Python first
+            if match_data and len(match_data) > 0:
+                # Extract riot_id from first match if available
+                riot_id = match_data[0].get('riot_id') or match_data[0].get('riotId') or "the player"
+                
+                # Import the analyzer
+                from utils.match_analyzer import analyze_matches_by_queue, get_queue_name
+                
+                # Determine what analysis to do based on the query
+                queue_id = None
+                limit = None
+                
+                query_lower = query.lower()
+                if 'flex' in query_lower:
+                    queue_id = 440
+                elif 'solo' in query_lower or ('ranked' in query_lower and 'flex' not in query_lower):
+                    queue_id = 420
+                elif 'aram' in query_lower:
+                    queue_id = 450
+                
+                # Extract number if user asks for "last X games"
+                import re
+                match_num = re.search(r'last (\d+)', query_lower)
+                if match_num:
+                    limit = int(match_num.group(1))
+                
+                # Analyze the data
+                analysis = analyze_matches_by_queue(match_data, queue_id, limit)
+                
+                # Convert to readable format
+                import json
+                analysis_json = json.dumps(analysis, indent=2)
+                
+                # Build enhanced query with ANALYZED data
+                enhanced_query = f"""{query}
+
+=== PRE-ANALYZED MATCH DATA ===
+
+I have analyzed the cached match data for {riot_id}. Here are the results:
+
+{analysis_json}
+
+This analysis includes:
+- Win/loss record and win rate
+- Average KDA, CS, gold, damage, vision score
+- Match-by-match breakdown with specific performance
+- Top champions played with win rates
+
+Use this analyzed data to provide detailed, specific feedback to the user. 
+Highlight trends, strengths, weaknesses, and actionable advice.
+DO NOT call any tools - all analysis is complete above."""
+                
+                result = self.agent(enhanced_query)
+            else:
+                result = self.agent(query)
+            
             return result.message['content'][0]['text']
         except Exception as e:
             logging.error(f"Error in custom_query: {e}")

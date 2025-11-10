@@ -20,6 +20,7 @@ import {
 import { useProgressiveMatchHistory, useQueueMatches } from '../../hooks/useProgressiveMatchHistory';
 import { useProfile } from '../../hooks/useProfile';
 import { useRankedInfo } from '../../hooks/useRankedInfo';
+import { useUserProfile } from '../../hooks/useUserProfile';
 import { RiotButton } from '../ui/RiotButton';
 import { InlineLoading } from '../LoadingState';
 import type { MatchData } from '../../types';
@@ -46,6 +47,7 @@ const QUEUE_FILTERS = [
   { id: 'all', name: 'All', queueId: null, queueType: null },
   { id: 'ranked_solo', name: 'Ranked Solo/Duo', queueId: 420, queueType: 'RANKED_SOLO_5x5' },
   { id: 'ranked_flex', name: 'Ranked Flex', queueId: 440, queueType: 'RANKED_FLEX_SR' },
+  { id: 'normal', name: 'Normal Games', queueId: 400, queueType: null },
   { id: 'aram', name: 'ARAM', queueId: 450, queueType: null },
 ];
 
@@ -82,6 +84,13 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
     enabled: !!profile?.riotId,
   });
 
+  // Generate and cache user profile (runs after matches are loaded)
+  const { data: userProfile } = useUserProfile({
+    riotId: profile?.riotId || '',
+    region: profile?.region || 'europe',
+    enabled: !!profile?.riotId && !!progressiveData.all,
+  });
+
   // Determine which matches to display based on selected queue
   const getMatchesForQueue = () => {
     if (selectedQueue === null) {
@@ -94,6 +103,8 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
         return progressiveData.rankedSolo?.matches || queueMatchHistory?.matches || [];
       case 440:
         return progressiveData.rankedFlex?.matches || queueMatchHistory?.matches || [];
+      case 400:
+        return progressiveData.normal?.matches || queueMatchHistory?.matches || [];
       case 450:
         return progressiveData.aram?.matches || queueMatchHistory?.matches || [];
       default:

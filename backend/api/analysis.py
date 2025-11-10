@@ -68,6 +68,8 @@ class CustomQueryRequest(BaseModel):
     """Request model for custom queries"""
     query: str = Field(..., description="Natural language query")
     riot_id: Optional[str] = Field(None, description="Optional RiotID for context")
+    match_data: Optional[List[dict]] = Field(None, description="Pre-fetched match data from frontend cache")
+    ranked_data: Optional[dict] = Field(None, description="Pre-fetched ranked data from frontend cache")
 
 
 # ==================== Performance Analysis Endpoints ====================
@@ -148,6 +150,8 @@ async def custom_performance_query(request: CustomQueryRequest):
     - "How did I perform in my last game?"
     - "What should I focus on to improve my CS?"
     - "Analyze my vision score trends"
+    
+    Tip: Pass match_data from frontend cache to avoid API calls and get faster responses!
     """
     try:
         agent = get_performance_agent()
@@ -157,13 +161,18 @@ async def custom_performance_query(request: CustomQueryRequest):
         if request.riot_id:
             query = f"For player {request.riot_id}: {query}"
         
-        analysis = agent.custom_query(query)
+        # Pass match_data to agent if provided (avoids API calls!)
+        analysis = agent.custom_query(query, match_data=request.match_data)
         
         return AnalysisResponse(
             analysis=analysis,
             riot_id=request.riot_id or "N/A",
             analysis_type="custom_query",
-            metadata={"query": request.query}
+            metadata={
+                "query": request.query,
+                "used_cached_data": request.match_data is not None,
+                "matches_provided": len(request.match_data) if request.match_data else 0
+            }
         )
         
     except Exception as e:
@@ -463,3 +472,48 @@ async def analysis_health():
                 "comparison": "unknown"
             }
         }
+
+
+
+# ==================== User Profile Endpoint ====================
+
+class UserProfileRequest(BaseModel):
+    """Request model for user profile generation"""
+    riot_id: str = Field(..., description="Player's RiotID")
+    match_count: int = Field(default=20, ge=1, le=100, description="Number of matches to analyze")
+
+
+@router.post(
+    "/user-profile",
+    summary="Get comprehensive user profile",
+    description="Generate comprehensive user profile with stats, rank, champion pool, etc. for AI agents"
+)
+async def get_user_profile_endpoint(request: UserProfileRequest):
+    """
+    Generate comprehensive user profile for AI agent context.
+    
+    This endpoint is called by the frontend on dashboard load to cache
+    user profile data for faster AI responses.
+    """
+    try:
+        from tools.user_profile_tool import get_user_profile
+        
+        # Call the tool directly
+        profile_data = get_user_profile(request.riot_id, request.match_count)
+        
+        if "error" in profile_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=profile_data["error"]
+            )
+        
+        return profile_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating user profile: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate user profile: {str(e)}"
+        )

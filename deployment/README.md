@@ -1,82 +1,152 @@
 # RuneSight Deployment
 
-Streamlined deployment system for RuneSight backend (AWS Lambda) and frontend (AWS Amplify).
+Complete deployment scripts for RuneSight backend and guides.
 
-## 📁 What's Here
+## Quick Start
 
-- **deploy-backend.ps1** - Deploy backend to AWS Lambda
-- **deploy-frontend.ps1** - Deploy frontend to AWS Amplify
-- **backend.config.json** - Backend configuration (your credentials)
-- **frontend.config.json** - Frontend configuration (your credentials)
-- **\*.example.json** - Configuration templates
-- **QUICK-START.md** - Fast deployment guide
-- **SETUP-README.md** - Complete documentation
+### 1. Configure Backend
 
-## 🚀 Quick Start
+```powershell
+# Copy example config
+Copy-Item backend.config.example.json backend.config.json
 
-1. **Configure:**
-   ```powershell
-   copy backend.config.example.json backend.config.json
-   copy frontend.config.example.json frontend.config.json
-   # Edit both files with your credentials
-   ```
+# Edit backend.config.json with your values:
+# - AWS account ID
+# - Riot API key
+# - Bedrock model ID
+```
 
-2. **Setup Virtual Environment:**
-   ```powershell
-   cd RuneSight/backend
-   python -m venv venv
-   .\venv\Scripts\Activate.ps1
-   pip install -r requirements.txt
-   cd ..\deployment
-   ```
+### 2. Deploy Everything
 
-3. **Deploy Backend:**
-   ```powershell
-   .\deploy-backend.ps1
-   ```
+```powershell
+# Deploy backend + setup guides (first time)
+.\deploy-backend.ps1 -SetupGuides
 
-4. **Deploy Frontend:**
-   ```powershell
-   .\deploy-frontend.ps1
-   ```
+# Or deploy backend only (if guides already setup)
+.\deploy-backend.ps1
+```
 
-5. **Update CORS:**
-   - Add Amplify URL to `backend.config.json` → `ALLOWED_ORIGINS`
-   - Run: `.\deploy-backend.ps1 -UpdateOnly`
+## What Gets Deployed
 
-## 📚 Documentation
+### Backend Deployment
+- ✅ Lambda function with all agent code
+- ✅ Lambda layer with Python dependencies
+- ✅ IAM role and policies
+- ✅ Function URL for API access
+- ✅ Environment variables
 
-See **[SETUP-README.md](SETUP-README.md)** for complete setup guide, configuration details, and troubleshooting.
+### Guides Setup (with -SetupGuides flag)
+- ✅ S3 bucket for LoL strategy guides
+- ✅ 6 markdown guide files uploaded
+- ✅ Lambda role configured for S3 access
+- ✅ Configuration saved
 
-## 🔒 Security
+## Deployment Options
 
-**Never commit these files to Git:**
-- `backend.config.json`
-- `frontend.config.json`
+### Full Deployment
+```powershell
+.\deploy-backend.ps1 -SetupGuides
+```
+Use for first-time deployment.
 
-They're already in `.gitignore` to protect your credentials.
+### Update Code Only
+```powershell
+.\deploy-backend.ps1
+```
+Use when you changed agent code.
 
-## 🔄 Updates
+### Update Environment Variables Only
+```powershell
+.\deploy-backend.ps1 -UpdateEnvOnly
+```
+Use when you only changed config values.
 
-**Backend:**
+### Update Configuration Only
 ```powershell
 .\deploy-backend.ps1 -UpdateOnly
 ```
+Use when you changed Lambda settings (timeout, memory).
 
-**Frontend:**
+### With Docker (Linux-compatible dependencies)
 ```powershell
-git push  # Auto-deploys via Amplify
+.\deploy-backend.ps1 -UseDocker
+```
+Use for production to ensure Linux compatibility.
+
+## Files
+
+### Required
+- `backend.config.json` - Main configuration (create from example)
+- `deploy-backend.ps1` - Main deployment script
+
+### Optional
+- `create_kb_simple.ps1` - Standalone guides setup
+- `SIMPLE_KB_GUIDE.md` - Guides documentation
+
+### Auto-Generated
+- `../backend/config/guides_storage.json` - Guides configuration
+
+## Configuration
+
+Edit `backend.config.json`:
+
+```json
+{
+  "aws": {
+    "region": "eu-central-1",
+    "accountId": "YOUR_ACCOUNT_ID"
+  },
+  "lambda": {
+    "functionName": "RuneSight-Backend",
+    "timeout": 30,
+    "memorySize": 1024
+  },
+  "iam": {
+    "roleName": "YOUR_LAMBDA_ROLE"
+  },
+  "environment": {
+    "RIOT_API_KEY": "YOUR_RIOT_API_KEY",
+    "BEDROCK_MODEL_ID": "eu.amazon.nova-lite-v1:0"
+  }
+}
 ```
 
-## ✅ What You Need
+## Troubleshooting
 
-- AWS CLI configured
-- Python 3.11+
-- PowerShell
-- AWS account with Lambda/Amplify permissions
-- Riot API key
-- GitHub Personal Access Token
+### Deployment Fails
+- Check AWS credentials: `aws sts get-caller-identity`
+- Verify config file exists: `backend.config.json`
+- Check IAM permissions
 
----
+### Guides Not Loading
+- Verify S3 bucket exists
+- Check Lambda role has S3 permissions
+- Run guides setup: `.\create_kb_simple.ps1`
 
-**Ready to deploy?** See [SETUP-README.md](SETUP-README.md) for complete instructions!
+### Function URL Not Working
+- Check CORS settings in config
+- Verify Function URL was created
+- Test with: `curl FUNCTION_URL/health`
+
+## Cost Estimate
+
+- **Lambda:** ~$0.20/million requests
+- **S3:** ~$0.50/month (for guides)
+- **Bedrock:** ~$0.003/1K tokens
+- **Total:** ~$5-10/month (light usage)
+
+## Next Steps
+
+After deployment:
+1. ✅ Test Function URL
+2. ✅ Update frontend with API endpoint
+3. ✅ Test agents via chat interface
+4. ✅ Monitor CloudWatch logs
+
+## Support
+
+For issues:
+- Check CloudWatch logs
+- Verify configuration
+- Review error messages
+- Test with curl/Postman first

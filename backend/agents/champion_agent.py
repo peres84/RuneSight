@@ -6,10 +6,11 @@ and strategic recommendations.
 """
 
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from strands import Agent, tool
 from services.riot_api_client import RiotAPIClient
 from agents.base_agent import create_bedrock_model
+from tools.user_profile_tool import get_user_profile, get_user_profile_from_cache
 
 
 # Initialize services
@@ -336,6 +337,12 @@ class ChampionAgent:
 
 Your role is to provide champion-specific advice, analyze champion performance, and help players master their champion pool.
 
+**CRITICAL - Be Decisive**:
+- **NEVER ask the user if you should use cached vs fresh data**
+- If "CACHED DATA AVAILABLE" or "USER PROFILE" appears in context, use it immediately
+- If no cached data exists, automatically fetch fresh data
+- Be proactive - analyze and provide insights without asking permission
+
 When providing champion advice:
 1. **Champion Mastery**: Analyze player's performance on specific champions
 2. **Build Recommendations**: Suggest optimal item builds based on game context
@@ -360,7 +367,13 @@ Be encouraging and help players feel confident in their champion choices."""
         self.model = create_bedrock_model(temperature=0.3, streaming=False)
         self.agent = Agent(
             model=self.model,
-            tools=[get_champion_performance, get_champion_pool, get_matchup_history],
+            tools=[
+                get_champion_performance, 
+                get_champion_pool, 
+                get_matchup_history,
+                get_user_profile,
+                get_user_profile_from_cache
+            ],
             system_prompt=self.SYSTEM_PROMPT
         )
     
@@ -452,19 +465,52 @@ Use the get_matchup_history tool to retrieve historical data."""
             logging.error(f"Error in analyze_matchup: {e}")
             return f"Error analyzing matchup: {str(e)}"
     
-    def custom_query(self, query: str) -> str:
+    def custom_query(self, query: str, match_data: Optional[List[dict]] = None) -> str:
         """
         Handle custom champion-related queries.
         
         Args:
             query: Natural language query about champions
+            match_data: Optional pre-fetched match data from frontend (avoids API calls)
             
         Returns:
             AI-generated response to the query
         """
         try:
-            result = self.agent(query)
+            # If match data is provided, analyze it directly
+            if match_data and len(match_data) > 0:
+                # Extract riot_id and champion data
+                riot_id = match_data[0].get('riot_id') or match_data[0].get('riotId') or "the player"
+                
+                # Get champion pool from match data
+                champion_counts = {}
+                for match in match_data:
+                    champ = match.get('championName') or match.get('champion_name', 'Unknown')
+                    if champ not in champion_counts:
+                        champion_counts[champ] = {'games': 0, 'wins': 0}
+                    champion_counts[champ]['games'] += 1
+                    if match.get('win', False):
+                        champion_counts[champ]['wins'] += 1
+                
+                # Build champion summary
+                champ_summary = []
+                for champ, stats in sorted(champion_counts.items(), key=lambda x: x[1]['games'], reverse=True)[:5]:
+                    wr = round(stats['wins'] / stats['games'] * 100, 1) if stats['games'] > 0 else 0
+                    champ_summary.append(f"{champ}: {stats['games']} games, {wr}% WR")
+                
+                enhanced_query = f"""{query}
+
+CACHED CHAMPION DATA FOR {riot_id}:
+Top Champions:
+{chr(10).join(f'- {s}' for s in champ_summary)}
+
+Use this data to answer the user's question. DO NOT call tools - all data is provided above."""
+                
+                result = self.agent(enhanced_query)
+            else:
+                result = self.agent(query)
+            
             return result.message['content'][0]['text']
         except Exception as e:
             logging.error(f"Error in custom_query: {e}")
-            return f"Error processing query: {str(e)}"
+            raise Exception(f"AI analysis failed: {str(e)}")

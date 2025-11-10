@@ -56,8 +56,10 @@ class RiotAPIClient:
         "VN2": "vn2.api.riotgames.com",
     }
 
-    # Rate limiting settings
-    RATE_LIMIT_DELAY = 1.2  # Seconds between requests to avoid rate limiting
+    # Rate limiting settings (Riot API: 20 req/sec, 100 req/2min)
+    RATE_LIMIT_DELAY = 1.5  # Increased to 1.5 seconds between requests to avoid rate limiting
+    MAX_RETRIES = 3  # Maximum number of retries on rate limit errors
+    BACKOFF_MULTIPLIER = 2  # Exponential backoff multiplier
     
     def __init__(
         self,
@@ -110,13 +112,14 @@ class RiotAPIClient:
                 time.sleep(sleep_time)
         self.last_request_time = time.time()
 
-    def _make_request(self, url: str, params: Optional[Dict] = None) -> Optional[Dict]:
+    def _make_request(self, url: str, params: Optional[Dict] = None, retry_count: int = 0) -> Optional[Dict]:
         """
-        Make HTTP request with rate limiting and error handling.
+        Make HTTP request with rate limiting, exponential backoff, and error handling.
         
         Args:
             url: API endpoint URL
             params: Optional query parameters
+            retry_count: Current retry attempt (for exponential backoff)
         
         Returns:
             JSON response or None if request fails
@@ -124,7 +127,7 @@ class RiotAPIClient:
         self._rate_limit_delay()
         
         try:
-            response = requests.get(url, headers=self.headers, params=params, timeout=10)
+            response = requests.get(url, headers=self.headers, params=params, timeout=15)
             response.raise_for_status()
             return response.json()
         except requests.Timeout:
@@ -132,8 +135,15 @@ class RiotAPIClient:
             return None
         except requests.HTTPError as e:
             if e.response.status_code == 429:
-                logger.warning("Rate limit exceeded, backing off...")
-                time.sleep(5)  # Back off for 5 seconds
+                # Rate limit exceeded - use exponential backoff
+                if retry_count < self.MAX_RETRIES:
+                    backoff_time = (self.BACKOFF_MULTIPLIER ** retry_count) * 2  # 2s, 4s, 8s
+                    logger.warning(f"Rate limit exceeded (attempt {retry_count + 1}/{self.MAX_RETRIES}), backing off for {backoff_time}s...")
+                    time.sleep(backoff_time)
+                    return self._make_request(url, params, retry_count + 1)
+                else:
+                    logger.error(f"Rate limit exceeded after {self.MAX_RETRIES} retries")
+                    raise
             elif e.response.status_code != 404:
                 logger.error(f"HTTP error {e.response.status_code}: {url}")
             raise
