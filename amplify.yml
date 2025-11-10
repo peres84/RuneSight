@@ -7,6 +7,8 @@ frontend:
   phases:
     preBuild:
       commands:
+        # List root directory to verify structure
+        - ls -la
         # Navigate to frontend directory
         - cd frontend
         # Install dependencies using npm ci for reproducible builds
