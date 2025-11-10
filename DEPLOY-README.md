@@ -1,35 +1,47 @@
 # Deploy RuneSight to AWS Amplify
 
-Simple one-command deployment using AWS CLI.
+Two deployment options: Automated with GitHub or Manual via Console.
 
-## TL;DR
+## Option 1: Simple Setup (Recommended)
 
-```bash
+Creates the Amplify app and sets environment variables. Then connect GitHub via console.
+
+```powershell
 # Windows
+.\deploy-simple.ps1
+```
+
+This will:
+1. Create Amplify app
+2. Set all environment variables
+3. Give you the console link to connect GitHub
+
+## Option 2: Full Automated (Requires GitHub Token)
+
+```powershell
+# Windows - Edit deploy.ps1 first to add your GitHub repo URL
 .\deploy.ps1
 
 # Linux/Mac
 ./deploy.sh
 ```
 
-That's it! Script handles everything.
-
 ## Prerequisites
 
-1. **AWS CLI installed and configured**:
-   ```bash
-   aws configure
-   ```
+1. **AWS CLI configured**: `aws configure`
+2. **Riot API Key**: Get from https://developer.riotgames.com/
+3. **Bedrock Access**: Enable model in AWS Bedrock Console
 
-2. **GitHub Personal Access Token** (with repo access):
-   - Create at: https://github.com/settings/tokens
+## Fix GitHub Error
 
-3. **Riot API Key**:
-   - Get from: https://developer.riotgames.com/
+If you get "Not Found" or "404" error with GitHub:
 
-4. **Bedrock Access**:
-   - Go to AWS Bedrock Console
-   - Enable model access for Claude or Nova
+**Solution**: Use the simple script instead:
+```powershell
+.\deploy-simple.ps1
+```
+
+Then connect GitHub manually in the AWS Console (easier and more reliable).
 
 ## Quick Deploy
 

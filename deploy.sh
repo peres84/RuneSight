@@ -10,8 +10,8 @@ echo "===================================="
 
 # Configuration
 APP_NAME="RuneSight"
-REGION="us-east-1"  # Change to your preferred region
-GITHUB_REPO="https://github.com/YOUR_USERNAME/YOUR_REPO"  # Update this
+REGION="eu-central-1"
+GITHUB_REPO="https://github.com/peres84/RuneSight"
 GITHUB_BRANCH="main"
 GITHUB_TOKEN=""  # Will prompt if not set
 
