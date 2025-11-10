@@ -9,6 +9,9 @@ frontend:
       commands:
         # Go back to root directory first (in case we're in backend/)
         - cd $CODEBUILD_SRC_DIR
+        # Debug: Show current directory and contents
+        - pwd
+        - ls -la
         # Navigate to frontend directory
         - cd frontend
         # Install dependencies using npm ci for reproducible builds
