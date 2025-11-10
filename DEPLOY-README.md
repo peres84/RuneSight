@@ -1,6 +1,6 @@
 # Deploy RuneSight to AWS Amplify
 
-## Quick Deploy with PowerShell Script
+## Step 1: Deploy Frontend
 
 ```powershell
 .\deploy.ps1
@@ -12,36 +12,95 @@ The script will:
 3. Try to connect GitHub (may fail - that's OK)
 4. Give you console link to connect GitHub manually
 
-## After Running Script
+**Then connect GitHub in AWS Console**:
+1. Go to the Amplify Console link from the script
+2. Click "Connect repository" → GitHub → Authorize
+3. Select your repository and branch: main
+4. Click "Save and deploy"
 
-1. **Go to AWS Console**: The script gives you the link
-2. **Connect GitHub**:
-   - Click "Connect repository" or "Hosting environments"
-   - Select GitHub → Authorize
-   - Select: peres84/RuneSight
-   - Branch: main
-   - Click "Save and deploy"
+## Step 2: Deploy Backend
 
-## Build Time
+```powershell
+.\deploy-backend-layers.ps1
+```
 
-First deployment takes ~5-10 minutes:
-- Backend: Install Python packages (~2 min)
-- Frontend: Install npm packages and build (~3 min)
-- Deploy (~1 min)
+**Note**: Update the script first with your AWS account details:
+- Replace `YOUR_ACCOUNT_ID` with your AWS account ID
+- Replace `YOUR_LAMBDA_ROLE` with your Lambda execution role name
+
+**If environment variables weren't set**, set them manually:
+```powershell
+cd backend
+aws lambda update-function-configuration `
+  --function-name RuneSight-Backend `
+  --environment file://lambda-env.json `
+  --region eu-central-1
+```
+
+**Note**: `lambda-env.json` is in `.gitignore` - don't commit it!
+
+## Step 3: Connect Frontend to Backend
+
+Add the backend URL to Amplify environment variables:
+
+```powershell
+aws amplify update-app `
+  --app-id YOUR_APP_ID `
+  --region eu-central-1 `
+  --environment-variables VITE_API_URL=https://your-lambda-url.lambda-url.eu-central-1.on.aws,RIOT_API_KEY=$env:RIOT_API_KEY,BEDROCK_REGION=eu-central-1,BEDROCK_MODEL_ID=YOUR_BEDROCK_MODEL_ARN,ENVIRONMENT=production,PORT=8000,LOG_LEVEL=INFO
+```
+
+**Or via Console**:
+1. Go to AWS Amplify Console
+2. Select your app → Environment variables
+3. Add: `VITE_API_URL` = `your-lambda-function-url`
+4. Save
+
+## Step 4: Redeploy Frontend
+
+Go to Amplify Console → Hosting environments → Click "Redeploy this version"
+
+Or trigger via CLI:
+```powershell
+aws amplify start-job `
+  --app-id YOUR_APP_ID `
+  --branch-name main `
+  --job-type RELEASE `
+  --region eu-central-1
+```
+
+## Step 5: Test Your App
+
+1. **Test Backend**:
+   ```powershell
+   curl https://your-lambda-url.lambda-url.eu-central-1.on.aws/api/health
+   ```
+   Should return: `{"status":"healthy","environment":"production"}`
+
+2. **Test Frontend**:
+   Open your Amplify URL
+   
+3. **Test Full Integration**:
+   - Enter a RiotID in the app
+   - Verify it connects to the backend
+   - Check that data loads
+
+---
 
 ## Environment Variables
 
-Already configured by the script:
-- ✅ RIOT_API_KEY
-- ✅ BEDROCK_REGION (eu-central-1)
-- ✅ BEDROCK_MODEL_ID
-- ✅ ENVIRONMENT (production)
-- ✅ PORT (8000)
-- ✅ LOG_LEVEL (INFO)
+Configure these in both Amplify (frontend) and Lambda (backend):
 
-## Your App URL
+**Frontend (Amplify)**:
+- `VITE_API_URL` - Your Lambda function URL
 
-After deployment: `https://main.YOUR_APP_ID.amplifyapp.com`
+**Backend (Lambda)**:
+- `RIOT_API_KEY` - Your Riot Games API key
+- `BEDROCK_REGION` - eu-central-1
+- `BEDROCK_MODEL_ID` - Your Bedrock model ARN
+- `ENVIRONMENT` - production
+- `PORT` - 8000
+- `LOG_LEVEL` - INFO
 
 ## Troubleshooting
 
@@ -54,17 +113,10 @@ After deployment: `https://main.YOUR_APP_ID.amplifyapp.com`
 **GitHub connection fails**:
 - Normal! Connect manually through AWS Console (easier anyway)
 
-## Manual Deployment (Alternative)
-
-If the script doesn't work, deploy manually:
-
-1. Go to: https://console.aws.amazon.com/amplify/
-2. Click "New app" → "Host web app"
-3. Select GitHub → Authorize
-4. Select: peres84/RuneSight, branch: main
-5. Amplify auto-detects amplify.yml
-6. Add environment variables (see above)
-7. Click "Save and deploy"
+**502 Backend Error**:
+- Check CloudWatch logs for Lambda function
+- Verify environment variables are set
+- See BACKEND-DEPLOYMENT.md for details
 
 ---
 

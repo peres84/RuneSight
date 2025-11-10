@@ -1,0 +1,22 @@
+# Use AWS Lambda Python base image
+FROM public.ecr.aws/lambda/python:3.9
+
+# Copy requirements
+COPY backend/requirements.txt ${LAMBDA_TASK_ROOT}/
+
+# Install dependencies
+RUN pip install -r requirements.txt mangum --target ${LAMBDA_TASK_ROOT}
+
+# Copy application code
+COPY backend/*.py ${LAMBDA_TASK_ROOT}/
+COPY backend/agents ${LAMBDA_TASK_ROOT}/agents/
+COPY backend/api ${LAMBDA_TASK_ROOT}/api/
+COPY backend/models ${LAMBDA_TASK_ROOT}/models/
+COPY backend/services ${LAMBDA_TASK_ROOT}/services/
+COPY backend/utils ${LAMBDA_TASK_ROOT}/utils/
+
+# Create Lambda handler
+RUN echo "from mangum import Mangum\nfrom main import app\nhandler = Mangum(app, lifespan='off')" > ${LAMBDA_TASK_ROOT}/lambda_handler.py
+
+# Set handler
+CMD ["lambda_handler.handler"]

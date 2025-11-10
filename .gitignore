@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+backend/lambda-env.json
 
 # Python
 __pycache__/
@@ -67,3 +68,12 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+#package
+/package
+
+#zips
+.zip
+
+# Deployment files (contain sensitive data)
+deploy-backend-PRIVATE.ps1

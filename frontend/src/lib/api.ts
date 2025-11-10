@@ -9,7 +9,7 @@ import type {
   ApiErrorResponse,
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_ENDPOINT || 'http://localhost:8000';
 
 // Create axios instance with default configuration
 export const apiClient = axios.create({
