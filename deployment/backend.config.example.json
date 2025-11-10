@@ -1,0 +1,38 @@
+{
+  "aws": {
+    "region": "eu-central-1",
+    "accountId": "123456789012"
+  },
+  "lambda": {
+    "functionName": "RuneSight-Backend",
+    "runtime": "python3.11",
+    "handler": "lambda_handler.handler",
+    "timeout": 30,
+    "memorySize": 1024,
+    "architecture": "x86_64"
+  },
+  "layer": {
+    "enabled": true,
+    "layerName": "RuneSight-Dependencies",
+    "compatibleRuntimes": ["python3.11", "python3.12"]
+  },
+  "iam": {
+    "roleName": "RuneSight-Lambda-ExecutionRole",
+    "policyName": "RuneSight-Lambda-Policy",
+    "createRole": false
+  },
+  "environment": {
+    "RIOT_API_KEY": "RGAPI-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "BEDROCK_REGION": "eu-central-1",
+    "BEDROCK_MODEL_ID": "arn:aws:bedrock:eu-central-1:123456789012:inference-profile/eu.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "ENVIRONMENT": "production",
+    "PORT": "8000",
+    "LOG_LEVEL": "INFO",
+    "ALLOWED_ORIGINS": "https://your-domain.amplifyapp.com,http://localhost:5173",
+    "GITHUB_ACCESS_TOKEN": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  "paths": {
+    "backend": "../backend",
+    "buildDir": "./build"
+  }
+}

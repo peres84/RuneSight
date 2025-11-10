@@ -13,15 +13,15 @@ import {
   Target,
   Users,
   Trophy,
-  XCircle,
   Zap,
   Brain,
   ArrowRight,
 } from 'lucide-react';
-import { useMatchHistory } from '../../hooks/useMatchHistory';
+import { useProgressiveMatchHistory, useQueueMatches } from '../../hooks/useProgressiveMatchHistory';
 import { useProfile } from '../../hooks/useProfile';
 import { useRankedInfo } from '../../hooks/useRankedInfo';
 import { RiotButton } from '../ui/RiotButton';
+import { InlineLoading } from '../LoadingState';
 import type { MatchData } from '../../types';
 
 // Queue ID to game mode mapping
@@ -59,13 +59,21 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
   const [visibleMatches, setVisibleMatches] = useState(4);
   const [selectedQueue, setSelectedQueue] = useState<number | null>(null);
 
-  const { data: matchHistory, isLoading, error } = useMatchHistory({
+  // Progressive loading: loads first 5 matches immediately, then fetches rest in background
+  const progressiveData = useProgressiveMatchHistory({
     riotId: profile?.riotId || '',
     region: profile?.region || 'europe',
-    count: 20,
-    queue: selectedQueue || undefined,
     enabled: !!profile?.riotId,
   });
+
+  // Get matches for selected queue (uses pre-fetched data if available)
+  const { data: queueMatchHistory } = useQueueMatches(
+    profile?.riotId || '',
+    selectedQueue,
+    profile?.region || 'europe',
+    undefined,
+    !!profile?.riotId && selectedQueue !== null
+  );
 
   // Fetch ranked information
   const { data: rankedInfo } = useRankedInfo({
@@ -74,8 +82,28 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
     enabled: !!profile?.riotId,
   });
 
-  // Use matches directly since they're already filtered by queue on the backend
-  const filteredMatches = matchHistory?.matches || [];
+  // Determine which matches to display based on selected queue
+  const getMatchesForQueue = () => {
+    if (selectedQueue === null) {
+      return progressiveData.all?.matches || [];
+    }
+    
+    // Use pre-fetched data if available
+    switch (selectedQueue) {
+      case 420:
+        return progressiveData.rankedSolo?.matches || queueMatchHistory?.matches || [];
+      case 440:
+        return progressiveData.rankedFlex?.matches || queueMatchHistory?.matches || [];
+      case 450:
+        return progressiveData.aram?.matches || queueMatchHistory?.matches || [];
+      default:
+        return queueMatchHistory?.matches || [];
+    }
+  };
+
+  const filteredMatches = getMatchesForQueue();
+  const isLoading = progressiveData.isInitialLoading;
+  const isBackgroundLoading = progressiveData.isBackgroundLoading;
 
   const handleLoadMore = () => {
     setVisibleMatches(prev => Math.min(prev + 4, filteredMatches.length));
@@ -104,18 +132,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
             className="w-16 h-16 border-4 border-runesight-accent border-t-transparent rounded-full mx-auto mb-4"
           />
           <p className="text-slate-600 dark:text-slate-400 text-lg">Loading your match data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 dark:text-red-400 text-lg mb-4">Error loading matches</p>
-          <p className="text-slate-600 dark:text-slate-500">{error.message}</p>
+          <p className="text-slate-500 dark:text-slate-500 text-sm mt-2">Fetching initial matches...</p>
         </div>
       </div>
     );
@@ -148,6 +165,31 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onOpenCh
       </div>
 
       <div className="container mx-auto px-4 py-8 relative z-10">
+        {/* Background Loading Indicator */}
+        {isBackgroundLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-4 bg-runesight-accent/10 border border-runesight-accent/30 rounded-lg p-3 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <InlineLoading />
+              <span className="text-sm text-slate-700 dark:text-slate-300">
+                Loading additional match data in background... ({progressiveData.progress}%)
+              </span>
+            </div>
+            <div className="w-32 h-2 bg-slate-300 dark:bg-slate-700 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-runesight-accent"
+                initial={{ width: 0 }}
+                animate={{ width: `${progressiveData.progress}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

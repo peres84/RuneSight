@@ -50,12 +50,19 @@ app = FastAPI(
 )
 
 # CORS configuration for Amplify frontend
+# Get allowed origins from environment variable or use default
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "https://main.d2nnbamo017p3o.amplifyapp.com,http://localhost:5173,http://localhost:3000"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure for your Amplify domain in production
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Health check endpoint

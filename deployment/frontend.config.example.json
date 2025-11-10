@@ -1,0 +1,22 @@
+{
+  "amplify": {
+    "appName": "RuneSight",
+    "region": "eu-central-1",
+    "platform": "WEB"
+  },
+  "github": {
+    "repository": "https://github.com/YOUR_USERNAME/RuneSight",
+    "branch": "main",
+    "token": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  "environment": {
+    "RIOT_API_KEY": "RGAPI-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "AWS_REGION": "eu-central-1",
+    "AWS_ACCESS_KEY_ID": "AKIAXXXXXXXXXXXXXXXXX",
+    "AWS_SECRET_ACCESS_KEY": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "BEDROCK_MODEL_ID": "arn:aws:bedrock:eu-central-1:123456789012:inference-profile/eu.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "ENVIRONMENT": "production",
+    "PORT": "8000",
+    "LOG_LEVEL": "INFO"
+  }
+}

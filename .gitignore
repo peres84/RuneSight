@@ -4,6 +4,33 @@
 .env.*.local
 backend/lambda-env.json
 
+# Deployment configuration with real credentials
+backend.config.json
+frontend.config.json
+
+# Build artifacts
+build/
+*.zip
+python/
+package/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Temporary files
+env-vars.json
+trust-policy.json
+lambda-env.json
+
+# AWS credentials
+.aws/
+
+# Logs
+*.log
+
+
 # Python
 __pycache__/
 *.py[cod]

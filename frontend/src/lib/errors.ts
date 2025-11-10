@@ -165,3 +165,101 @@ export function formatErrorForLogging(error: Error, context?: Record<string, any
 
     return logEntry;
 }
+
+/**
+ * Retry configuration
+ */
+export interface RetryConfig {
+    maxRetries: number;
+    initialDelay: number;
+    maxDelay: number;
+    backoffMultiplier: number;
+}
+
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+    maxRetries: 3,
+    initialDelay: 1000, // 1 second
+    maxDelay: 10000, // 10 seconds
+    backoffMultiplier: 2,
+};
+
+/**
+ * Retry a function with exponential backoff
+ */
+export async function retryWithBackoff<T>(
+    fn: () => Promise<T>,
+    config: Partial<RetryConfig> = {}
+): Promise<T> {
+    const { maxRetries, initialDelay, maxDelay, backoffMultiplier } = {
+        ...DEFAULT_RETRY_CONFIG,
+        ...config,
+    };
+
+    let lastError: Error | null = null;
+    let delay = initialDelay;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            lastError = error as Error;
+
+            // Don't retry if error is not retryable
+            if (!isRetryableError(lastError)) {
+                throw lastError;
+            }
+
+            // Don't retry if we've exhausted attempts
+            if (attempt === maxRetries) {
+                throw lastError;
+            }
+
+            // Wait before retrying
+            await new Promise((resolve) => setTimeout(resolve, delay));
+
+            // Increase delay for next attempt (exponential backoff)
+            delay = Math.min(delay * backoffMultiplier, maxDelay);
+
+            console.log(`Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms`);
+        }
+    }
+
+    throw lastError || new Error('Retry failed');
+}
+
+/**
+ * Error recovery strategies
+ */
+export interface ErrorRecoveryOptions {
+    onRetry?: () => void;
+    onFallback?: () => void;
+    fallbackData?: any;
+}
+
+/**
+ * Handle error with recovery strategy
+ */
+export async function handleErrorWithRecovery<T>(
+    fn: () => Promise<T>,
+    options: ErrorRecoveryOptions = {}
+): Promise<T | null> {
+    try {
+        return await retryWithBackoff(fn);
+    } catch (error) {
+        const err = error as Error;
+
+        // Log error
+        console.error('Error with recovery:', formatErrorForLogging(err));
+
+        // Try fallback if available
+        if (options.fallbackData !== undefined) {
+            if (options.onFallback) {
+                options.onFallback();
+            }
+            return options.fallbackData;
+        }
+
+        // Return null if no fallback
+        return null;
+    }
+}

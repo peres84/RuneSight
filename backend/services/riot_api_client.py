@@ -10,16 +10,11 @@ import time
 import requests
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
+import logging
 
+from services.cache_service import get_cache
 
-class CacheEntry:
-    """Simple cache entry with TTL support"""
-    def __init__(self, data: Any, ttl_seconds: int):
-        self.data = data
-        self.expires_at = datetime.now() + timedelta(seconds=ttl_seconds)
-    
-    def is_expired(self) -> bool:
-        return datetime.now() > self.expires_at
+logger = logging.getLogger(__name__)
 
 
 class RiotAPIClient:
@@ -61,20 +56,15 @@ class RiotAPIClient:
         "VN2": "vn2.api.riotgames.com",
     }
 
-    # Cache TTL settings (in seconds)
-    CACHE_TTL = {
-        "account": 86400,      # 24 hours - account data rarely changes
-        "summoner": 3600,      # 1 hour - summoner data changes occasionally
-        "match_ids": 300,      # 5 minutes - match list updates frequently
-        "match_details": 3600, # 1 hour - match details never change
-        "league": 1800,        # 30 minutes - rank changes moderately
-    }
-
+    # Rate limiting settings
+    RATE_LIMIT_DELAY = 1.2  # Seconds between requests to avoid rate limiting
+    
     def __init__(
         self,
         api_key: Optional[str] = None,
         region: str = "EUROPE",
-        platform: str = "EUW1"
+        platform: str = "EUW1",
+        use_global_cache: bool = True
     ):
         """
         Initialize Riot API client with caching.
@@ -83,6 +73,7 @@ class RiotAPIClient:
             api_key: Riot API key. If None, loads from RIOT_API_KEY env variable
             region: Regional routing (AMERICAS, EUROPE, ASIA, SEA)
             platform: Platform routing (NA1, EUW1, KR, etc.)
+            use_global_cache: Whether to use global cache service
 
         Raises:
             ValueError: If API key is not provided and not found in environment
@@ -95,7 +86,9 @@ class RiotAPIClient:
 
         self.region = region
         self.platform = platform
-        self.cache: Dict[str, CacheEntry] = {}
+        self.use_global_cache = use_global_cache
+        self.cache = get_cache() if use_global_cache else None
+        self.last_request_time = 0
 
     @property
     def headers(self) -> Dict[str, str]:
@@ -107,29 +100,46 @@ class RiotAPIClient:
         """
         return {"X-Riot-Token": self.api_key}
 
-    def _get_from_cache(self, key: str) -> Optional[Any]:
-        """Get data from cache if not expired"""
-        if key in self.cache:
-            entry = self.cache[key]
-            if not entry.is_expired():
-                return entry.data
-            else:
-                # Remove expired entry
-                del self.cache[key]
-        return None
+    def _rate_limit_delay(self):
+        """Implement rate limiting delay between requests"""
+        if self.last_request_time > 0:
+            elapsed = time.time() - self.last_request_time
+            if elapsed < self.RATE_LIMIT_DELAY:
+                sleep_time = self.RATE_LIMIT_DELAY - elapsed
+                logger.debug(f"Rate limiting: sleeping for {sleep_time:.2f}s")
+                time.sleep(sleep_time)
+        self.last_request_time = time.time()
 
-    def _set_cache(self, key: str, data: Any, ttl_seconds: int):
-        """Store data in cache with TTL"""
-        self.cache[key] = CacheEntry(data, ttl_seconds)
-
-    def _clean_expired_cache(self):
-        """Remove all expired cache entries"""
-        expired_keys = [
-            key for key, entry in self.cache.items()
-            if entry.is_expired()
-        ]
-        for key in expired_keys:
-            del self.cache[key]
+    def _make_request(self, url: str, params: Optional[Dict] = None) -> Optional[Dict]:
+        """
+        Make HTTP request with rate limiting and error handling.
+        
+        Args:
+            url: API endpoint URL
+            params: Optional query parameters
+        
+        Returns:
+            JSON response or None if request fails
+        """
+        self._rate_limit_delay()
+        
+        try:
+            response = requests.get(url, headers=self.headers, params=params, timeout=10)
+            response.raise_for_status()
+            return response.json()
+        except requests.Timeout:
+            logger.error(f"Request timeout: {url}")
+            return None
+        except requests.HTTPError as e:
+            if e.response.status_code == 429:
+                logger.warning("Rate limit exceeded, backing off...")
+                time.sleep(5)  # Back off for 5 seconds
+            elif e.response.status_code != 404:
+                logger.error(f"HTTP error {e.response.status_code}: {url}")
+            raise
+        except Exception as e:
+            logger.error(f"Request error: {e}")
+            return None
 
     # ==================== Account API ====================
 
@@ -155,9 +165,10 @@ class RiotAPIClient:
         """
         cache_key = f"account:{self.region}:{game_name}#{tag_line}"
         
-        if use_cache:
-            cached_data = self._get_from_cache(cache_key)
+        if use_cache and self.cache:
+            cached_data = self.cache.get(cache_key)
             if cached_data:
+                logger.debug(f"Cache hit: {cache_key}")
                 return cached_data.get("puuid")
 
         try:
@@ -165,14 +176,14 @@ class RiotAPIClient:
                 f"https://{self.REGIONAL_ROUTING[self.region]}"
                 f"/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}"
             )
-            response = requests.get(url, headers=self.headers)
-            response.raise_for_status()
-            data = response.json()
+            data = self._make_request(url)
             
-            # Cache the account data
-            self._set_cache(cache_key, data, self.CACHE_TTL["account"])
+            if data and self.cache:
+                # Cache the account data
+                self.cache.set(cache_key, data, cache_type="account")
+                logger.debug(f"Cached: {cache_key}")
             
-            return data.get("puuid")
+            return data.get("puuid") if data else None
         except requests.HTTPError as e:
             if e.response.status_code == 404:
                 return None
@@ -200,9 +211,10 @@ class RiotAPIClient:
         """
         cache_key = f"account:{self.region}:{game_name}#{tag_line}"
         
-        if use_cache:
-            cached_data = self._get_from_cache(cache_key)
+        if use_cache and self.cache:
+            cached_data = self.cache.get(cache_key)
             if cached_data:
+                logger.debug(f"Cache hit: {cache_key}")
                 return cached_data
 
         try:
@@ -210,12 +222,12 @@ class RiotAPIClient:
                 f"https://{self.REGIONAL_ROUTING[self.region]}"
                 f"/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}"
             )
-            response = requests.get(url, headers=self.headers)
-            response.raise_for_status()
-            data = response.json()
+            data = self._make_request(url)
             
-            # Cache the account data
-            self._set_cache(cache_key, data, self.CACHE_TTL["account"])
+            if data and self.cache:
+                # Cache the account data
+                self.cache.set(cache_key, data, cache_type="account")
+                logger.debug(f"Cached: {cache_key}")
             
             return data
         except requests.HTTPError as e:
@@ -251,9 +263,10 @@ class RiotAPIClient:
         """
         cache_key = f"match_ids:{self.region}:{puuid}:{start}:{count}:{queue}"
         
-        if use_cache:
-            cached_data = self._get_from_cache(cache_key)
+        if use_cache and self.cache:
+            cached_data = self.cache.get(cache_key)
             if cached_data:
+                logger.debug(f"Cache hit: {cache_key}")
                 return cached_data
 
         url = (
@@ -265,14 +278,14 @@ class RiotAPIClient:
         if queue:
             params["queue"] = queue
 
-        response = requests.get(url, headers=self.headers, params=params)
-        response.raise_for_status()
-        data = response.json()
+        data = self._make_request(url, params=params)
         
-        # Cache the match IDs list
-        self._set_cache(cache_key, data, self.CACHE_TTL["match_ids"])
+        if data and self.cache:
+            # Cache the match IDs list
+            self.cache.set(cache_key, data, cache_type="match_ids")
+            logger.debug(f"Cached: {cache_key}")
         
-        return data
+        return data if data else []
 
     def get_match_details(
         self,
@@ -294,9 +307,10 @@ class RiotAPIClient:
         """
         cache_key = f"match_details:{match_id}"
         
-        if use_cache:
-            cached_data = self._get_from_cache(cache_key)
+        if use_cache and self.cache:
+            cached_data = self.cache.get(cache_key)
             if cached_data:
+                logger.debug(f"Cache hit: {cache_key}")
                 return cached_data
 
         try:
@@ -304,12 +318,12 @@ class RiotAPIClient:
                 f"https://{self.REGIONAL_ROUTING[self.region]}"
                 f"/lol/match/v5/matches/{match_id}"
             )
-            response = requests.get(url, headers=self.headers)
-            response.raise_for_status()
-            data = response.json()
+            data = self._make_request(url)
             
-            # Cache match details (they never change)
-            self._set_cache(cache_key, data, self.CACHE_TTL["match_details"])
+            if data and self.cache:
+                # Cache match details (they never change)
+                self.cache.set(cache_key, data, cache_type="match_details")
+                logger.debug(f"Cached: {cache_key}")
             
             return data
         except requests.HTTPError as e:
@@ -339,9 +353,10 @@ class RiotAPIClient:
         """
         cache_key = f"summoner:{self.platform}:{puuid}"
         
-        if use_cache:
-            cached_data = self._get_from_cache(cache_key)
+        if use_cache and self.cache:
+            cached_data = self.cache.get(cache_key)
             if cached_data:
+                logger.debug(f"Cache hit: {cache_key}")
                 return cached_data
 
         try:
@@ -349,12 +364,12 @@ class RiotAPIClient:
                 f"https://{self.PLATFORM_ROUTING[self.platform]}"
                 f"/lol/summoner/v4/summoners/by-puuid/{puuid}"
             )
-            response = requests.get(url, headers=self.headers)
-            response.raise_for_status()
-            data = response.json()
+            data = self._make_request(url)
             
-            # Cache summoner data
-            self._set_cache(cache_key, data, self.CACHE_TTL["summoner"])
+            if data and self.cache:
+                # Cache summoner data
+                self.cache.set(cache_key, data, cache_type="summoner")
+                logger.debug(f"Cached: {cache_key}")
             
             return data
         except requests.HTTPError as e:
@@ -384,9 +399,10 @@ class RiotAPIClient:
         """
         cache_key = f"league:{self.platform}:{puuid}"
         
-        if use_cache:
-            cached_data = self._get_from_cache(cache_key)
+        if use_cache and self.cache:
+            cached_data = self.cache.get(cache_key)
             if cached_data:
+                logger.debug(f"Cache hit: {cache_key}")
                 return cached_data
 
         try:
@@ -394,14 +410,14 @@ class RiotAPIClient:
                 f"https://{self.PLATFORM_ROUTING[self.platform]}"
                 f"/lol/league/v4/entries/by-puuid/{puuid}"
             )
-            response = requests.get(url, headers=self.headers)
-            response.raise_for_status()
-            data = response.json()
+            data = self._make_request(url)
             
-            # Cache league data
-            self._set_cache(cache_key, data, self.CACHE_TTL.get("league", 1800))
+            if data and self.cache:
+                # Cache league data
+                self.cache.set(cache_key, data, cache_type="league")
+                logger.debug(f"Cached: {cache_key}")
             
-            return data
+            return data if data else []
         except requests.HTTPError as e:
             if e.response.status_code == 404:
                 return []
@@ -411,12 +427,11 @@ class RiotAPIClient:
 
     def clear_cache(self):
         """Clear all cached data"""
-        self.cache.clear()
+        if self.cache:
+            self.cache.clear()
 
     def get_cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics"""
-        self._clean_expired_cache()
-        return {
-            "total_entries": len(self.cache),
-            "cache_keys": list(self.cache.keys())
-        }
+        if self.cache:
+            return self.cache.get_stats()
+        return {"message": "Cache not enabled"}

@@ -5,14 +5,18 @@ import { LandingPage, Navigation } from './components/layout'
 import { OnboardingPage } from './components/onboarding'
 import { AnalyticsDashboard } from './components/dashboard/AnalyticsDashboard'
 import { ChatModal } from './components/chat/ChatModal'
+import ErrorBoundary from './components/ErrorBoundary'
+import { LoadingState } from './components/LoadingState'
 import type { UserProfile } from './types'
 
-// Create a client for React Query
+// Create a client for React Query with optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      retry: 1,
+      retry: 2, // Retry failed requests twice
+      staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+      cacheTime: 10 * 60 * 1000, // Keep unused data in cache for 10 minutes
     },
   },
 })
@@ -59,12 +63,11 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse">
-          <div className="h-8 w-32 bg-muted rounded mb-4"></div>
-          <div className="h-4 w-48 bg-muted rounded"></div>
-        </div>
-      </div>
+      <LoadingState 
+        message="Loading RuneSight..." 
+        size="lg" 
+        fullScreen 
+      />
     )
   }
 
@@ -111,9 +114,16 @@ function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {renderCurrentPage()}
-    </QueryClientProvider>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        // Log errors in production (could send to error tracking service)
+        console.error('Application Error:', error, errorInfo);
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        {renderCurrentPage()}
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }
 

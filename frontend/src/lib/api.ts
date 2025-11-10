@@ -32,29 +32,71 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Track retry attempts per request
+const retryAttempts = new Map<string, number>();
+const MAX_RETRIES = 3;
+
 // Response interceptor for error handling and retry logic
 apiClient.interceptors.response.use(
   (response) => {
+    // Clear retry count on success
+    if (response.config.url) {
+      retryAttempts.delete(response.config.url);
+    }
     return response;
   },
   async (error: AxiosError<ApiErrorResponse>) => {
-    console.error('API Response Error:', error);
+    const config = error.config as AxiosRequestConfig & { _retryCount?: number };
     
-    // Handle rate limiting with retry
+    if (!config) {
+      return Promise.reject(error);
+    }
+    
+    // Initialize retry count
+    config._retryCount = config._retryCount || 0;
+    
+    // Handle rate limiting with exponential backoff
     if (error.response?.status === 429) {
-      const retryAfter = parseInt(error.response.headers['retry-after'] || '5', 10);
-      console.log(`Rate limited. Retrying after ${retryAfter} seconds...`);
-      
-      // Wait and retry once
-      await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-      return apiClient.request(error.config as AxiosRequestConfig);
+      if (config._retryCount < MAX_RETRIES) {
+        const retryAfter = parseInt(error.response.headers['retry-after'] || '5', 10);
+        const delay = Math.min(retryAfter * 1000, 30000); // Max 30 seconds
+        
+        console.log(`Rate limited. Retrying after ${delay}ms (attempt ${config._retryCount + 1}/${MAX_RETRIES})`);
+        
+        config._retryCount++;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return apiClient.request(config);
+      }
+    }
+    
+    // Handle server errors (5xx) with exponential backoff
+    if (error.response?.status && error.response.status >= 500) {
+      if (config._retryCount < MAX_RETRIES) {
+        const delay = Math.min(1000 * Math.pow(2, config._retryCount), 10000); // Exponential backoff, max 10s
+        
+        console.log(`Server error. Retrying after ${delay}ms (attempt ${config._retryCount + 1}/${MAX_RETRIES})`);
+        
+        config._retryCount++;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return apiClient.request(config);
+      }
     }
     
     // Handle network errors with retry
-    if (!error.response && error.code === 'ECONNABORTED') {
-      console.log('Request timeout. Retrying once...');
-      return apiClient.request(error.config as AxiosRequestConfig);
+    if (!error.response && (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT')) {
+      if (config._retryCount < MAX_RETRIES) {
+        const delay = 2000 * (config._retryCount + 1); // Linear backoff
+        
+        console.log(`Network timeout. Retrying after ${delay}ms (attempt ${config._retryCount + 1}/${MAX_RETRIES})`);
+        
+        config._retryCount++;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return apiClient.request(config);
+      }
     }
+    
+    // Format error for user
+    console.error('API Response Error:', error);
     
     if (error.response) {
       // Server responded with error status
@@ -193,6 +235,22 @@ export const riotApi = {
    */
   healthCheck: async (): Promise<any> => {
     const response = await apiClient.get('/api/riot/health');
+    return response.data;
+  },
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats: async (): Promise<any> => {
+    const response = await apiClient.get('/api/riot/cache/stats');
+    return response.data;
+  },
+
+  /**
+   * Clear cache (admin endpoint)
+   */
+  clearCache: async (): Promise<any> => {
+    const response = await apiClient.post('/api/riot/cache/clear');
     return response.data;
   },
 };

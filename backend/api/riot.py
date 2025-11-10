@@ -341,6 +341,23 @@ async def riot_api_health():
             "/api/riot/validate",
             "/api/riot/matches/{riot_id}",
             "/api/riot/match/{match_id}",
-            "/api/riot/ranked/{riot_id}"
+            "/api/riot/ranked/{riot_id}",
+            "/api/riot/cache/stats"
         ]
     }
+
+
+@router.get("/cache/stats")
+async def get_cache_stats():
+    """Get cache statistics for monitoring"""
+    from services.cache_service import get_cache
+    cache = get_cache()
+    return cache.get_stats()
+
+
+@router.post("/cache/clear")
+async def clear_cache():
+    """Clear all cache entries (admin endpoint)"""
+    from services.cache_service import clear_cache
+    clear_cache()
+    return {"status": "success", "message": "Cache cleared"}
