@@ -8,6 +8,10 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB)](https://reactjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688)](https://fastapi.tiangolo.com/)
 
+Originally developed to run with Claude Sonnet 4.5 (Anthropic) via Amazon Bedrock. Due to issues with Sonnet credits on my AWS account, the deployed backend was switched to an Amazon Nova Pro fallback — so the live deployment is a fallback configuration and not fully optimized. In particular, prompt/tool-calling integration is not yet finalized and may not route calls to the intended agents correctly.
+
+For the best experience, download the repository and run the project locally configured to use Claude Sonnet 4.5 (the video demo was recorded with Claude Sonnet 4.5). Local use will reflect the intended agent behaviour and model responses — see the Getting Started section in this README to run the backend locally and point it at your preferred Sonnet 4.5 model.
+
 **🚀 [Try it live](https://main.d2nnbamo017p3o.amplifyapp.com/)** • Built for the AWS Rift Rewind Hackathon
 
 **Legal Disclaimer:** RuneSight is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
@@ -17,34 +21,41 @@
 ## 📸 Application Screenshots
 
 ### 🏠 Landing Page
+
 ![Homepage](images/homepage.png)
-*Gaming-inspired hero section with video background and smooth animations*
+_Gaming-inspired hero section with video background and smooth animations_
 
 ### 📊 Dashboard Overview
+
 ![Dashboard](images/dashboard.png)
-*Real-time match analytics with queue-specific filtering and performance metrics*
+_Real-time match analytics with queue-specific filtering and performance metrics_
 
 ### 🎯 Match Analysis
+
 ![Match Scores](images/scores_match.png)
-*Detailed match breakdown with KDA, CS, damage statistics, and champion performance*
+_Detailed match breakdown with KDA, CS, damage statistics, and champion performance_
 
 ### 🤖 AI-Powered Insights
+
 ![Weakness Analysis](images/weakness_analyse.png)
-*Personalized improvement recommendations from specialized AI agents*
+_Personalized improvement recommendations from specialized AI agents_
 
 ### 💬 Interactive Chat
+
 ![Chatbot](images/chatbot.png)
-*Natural language interface for asking questions about your gameplay*
+_Natural language interface for asking questions about your gameplay_
 
 ### 👥 Friend Comparison
+
 ![Comparing with Friend](images/comparing-with-friend.png)
-*Side-by-side performance analysis and duo synergy evaluation*
+_Side-by-side performance analysis and duo synergy evaluation_
 
 ---
 
 ## ✨ Key Features
 
 ### 🤖 Five Specialized AI Agents
+
 Powered by Amazon Bedrock (Claude Sonnet) and Strands framework:
 
 1. **Performance Analyst** - Analyzes individual match performance, identifies improvement areas, and tracks KDA, damage patterns, and objective control
@@ -54,6 +65,7 @@ Powered by Amazon Bedrock (Claude Sonnet) and Strands framework:
 5. **Match Summarizer** - Creates comprehensive match summaries, season reviews, and achievement tracking
 
 ### 📊 Comprehensive Analytics Dashboard
+
 - **Multi-Queue Support** - Separate analytics for Ranked Solo/Duo, Ranked Flex, Normal Games, and ARAM
 - **Real-time Statistics** - Win rate, KDA, CS, damage, and performance metrics
 - **Match History** - Detailed breakdown of recent games with champion performance
@@ -61,12 +73,14 @@ Powered by Amazon Bedrock (Claude Sonnet) and Strands framework:
 - **Smart Caching** - 80%+ cache hit rate reduces API calls by 50%
 
 ### 💬 Interactive AI Chat Interface
+
 - **Natural Language Queries** - Ask questions about your gameplay in plain English
 - **Context-Aware Responses** - AI agents understand your match history and performance
 - **Rich Visualizations** - Charts and graphs embedded in chat responses
 - **Multi-Agent Orchestration** - Automatically routes queries to the right specialist
 
 ### 🎨 Modern Gaming UI/UX
+
 - **Dark/Light Mode** - Full theme support with WCAG AA contrast compliance
 - **Responsive Design** - Seamless experience on desktop, tablet, and mobile
 - **League of Legends Aesthetic** - Gaming-inspired color schemes and animations
@@ -74,6 +88,7 @@ Powered by Amazon Bedrock (Claude Sonnet) and Strands framework:
 - **Video Hero Section** - Engaging landing page with background video
 
 ### ⚡ Performance & Reliability
+
 - **Instant Tab Switching** - Pre-fetched data for all queue types
 - **Error Boundaries** - Graceful error handling and recovery
 - **Retry Logic** - Automatic retry with exponential backoff
@@ -81,6 +96,7 @@ Powered by Amazon Bedrock (Claude Sonnet) and Strands framework:
 - **Loading States** - Clear feedback for all operations
 
 ### 🔒 Privacy & Security
+
 - **No Account Required** - Uses publicly available Riot Games data only
 - **Privacy First** - Your data stays local, no personal information stored
 - **CORS Configuration** - Proper cross-origin resource sharing
@@ -134,46 +150,50 @@ Powered by Amazon Bedrock (Claude Sonnet) and Strands framework:
 ### Technology Stack
 
 #### Frontend
-| Technology | Purpose | Version |
-|------------|---------|---------|
-| **React** | UI framework | 18.3+ |
-| **TypeScript** | Type safety | 5.9+ |
-| **Vite** | Build tool & dev server | 7.1+ |
-| **Tailwind CSS** | Utility-first styling | 3.3+ |
-| **shadcn/ui** | Component library | Latest |
-| **React Query** | Server state management | 5.0+ |
-| **Framer Motion** | Animation library | 11.0+ |
-| **Recharts** | Data visualization | 2.8+ |
-| **Axios** | HTTP client | 1.6+ |
-| **Lucide React** | Icon library | 0.294+ |
+
+| Technology        | Purpose                 | Version |
+| ----------------- | ----------------------- | ------- |
+| **React**         | UI framework            | 18.3+   |
+| **TypeScript**    | Type safety             | 5.9+    |
+| **Vite**          | Build tool & dev server | 7.1+    |
+| **Tailwind CSS**  | Utility-first styling   | 3.3+    |
+| **shadcn/ui**     | Component library       | Latest  |
+| **React Query**   | Server state management | 5.0+    |
+| **Framer Motion** | Animation library       | 11.0+   |
+| **Recharts**      | Data visualization      | 2.8+    |
+| **Axios**         | HTTP client             | 1.6+    |
+| **Lucide React**  | Icon library            | 0.294+  |
 
 #### Backend
-| Technology | Purpose | Version |
-|------------|---------|---------|
-| **FastAPI** | Web framework | 0.115+ |
-| **Mangum** | Lambda ASGI adapter | 0.17+ |
-| **Strands Agents** | AI orchestration | 1.15+ |
-| **Boto3** | AWS SDK | 1.35+ |
-| **Python** | Runtime | 3.11+ |
-| **Uvicorn** | ASGI server (local dev) | 0.34+ |
-| **Pydantic** | Data validation | 2.12+ |
+
+| Technology         | Purpose                 | Version |
+| ------------------ | ----------------------- | ------- |
+| **FastAPI**        | Web framework           | 0.115+  |
+| **Mangum**         | Lambda ASGI adapter     | 0.17+   |
+| **Strands Agents** | AI orchestration        | 1.15+   |
+| **Boto3**          | AWS SDK                 | 1.35+   |
+| **Python**         | Runtime                 | 3.11+   |
+| **Uvicorn**        | ASGI server (local dev) | 0.34+   |
+| **Pydantic**       | Data validation         | 2.12+   |
 
 #### AWS Services
-| Service | Purpose |
-|---------|---------|
-| **AWS Amplify** | Frontend hosting, CI/CD, SSL certificates |
-| **AWS Lambda** | Serverless backend compute |
-| **Lambda Function URL** | Public HTTPS endpoint for API |
-| **Amazon Bedrock** | AI model inference (Claude Sonnet) |
-| **CloudWatch Logs** | Application logging & monitoring |
-| **IAM Roles** | Secure service-to-service authentication |
-| **S3** | Knowledge base storage (strategy guides) |
+
+| Service                 | Purpose                                   |
+| ----------------------- | ----------------------------------------- |
+| **AWS Amplify**         | Frontend hosting, CI/CD, SSL certificates |
+| **AWS Lambda**          | Serverless backend compute                |
+| **Lambda Function URL** | Public HTTPS endpoint for API             |
+| **Amazon Bedrock**      | AI model inference (Claude Sonnet)        |
+| **CloudWatch Logs**     | Application logging & monitoring          |
+| **IAM Roles**           | Secure service-to-service authentication  |
+| **S3**                  | Knowledge base storage (strategy guides)  |
 
 #### External APIs
-| API | Purpose |
-|-----|---------|
+
+| API                | Purpose                                  |
+| ------------------ | ---------------------------------------- |
 | **Riot Games API** | Match history, player stats, ranked info |
-| **Data Dragon** | Champion data, items, runes, images |
+| **Data Dragon**    | Champion data, items, runes, images      |
 
 ---
 
@@ -367,6 +387,7 @@ python main.py
 ```
 
 Backend will be available at `http://localhost:8000`
+
 - API docs: `http://localhost:8000/docs`
 - Health check: `http://localhost:8000/api/health`
 
@@ -499,13 +520,13 @@ Copy-Item frontend.config.example.json frontend.config.json
 
 ### Deployment Options
 
-| Command | Use Case |
-|---------|----------|
-| `.\deploy-backend.ps1 -UseDocker` | Full backend deployment with Docker |
-| `.\deploy-backend.ps1 -UpdateEnvOnly` | Update environment variables only |
-| `.\deploy-backend.ps1 -UpdateOnly` | Update Lambda configuration only |
-| `.\deploy-frontend.ps1` | Deploy frontend to Amplify |
-| `.\create_kb_simple.ps1` | Setup knowledge base separately |
+| Command                               | Use Case                            |
+| ------------------------------------- | ----------------------------------- |
+| `.\deploy-backend.ps1 -UseDocker`     | Full backend deployment with Docker |
+| `.\deploy-backend.ps1 -UpdateEnvOnly` | Update environment variables only   |
+| `.\deploy-backend.ps1 -UpdateOnly`    | Update Lambda configuration only    |
+| `.\deploy-frontend.ps1`               | Deploy frontend to Amplify          |
+| `.\create_kb_simple.ps1`              | Setup knowledge base separately     |
 
 ### Deployment Features
 
@@ -533,6 +554,7 @@ aws logs tail /aws/lambda/RuneSight-Backend --follow
 ### Detailed Documentation
 
 For complete deployment instructions, troubleshooting, and advanced configuration:
+
 - **[deployment/SETUP-README.md](deployment/SETUP-README.md)** - Complete deployment guide
 - **[deployment/README.md](deployment/README.md)** - Quick reference
 - **[deployment/SIMPLE_KB_GUIDE.md](deployment/SIMPLE_KB_GUIDE.md)** - Knowledge base setup
@@ -648,10 +670,7 @@ The Lambda function requires the following IAM permissions:
     },
     {
       "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:ListBucket"
-      ],
+      "Action": ["s3:GetObject", "s3:ListBucket"],
       "Resource": [
         "arn:aws:s3:::runesight-knowledge-base",
         "arn:aws:s3:::runesight-knowledge-base/*"
@@ -682,6 +701,7 @@ The Lambda function requires the following IAM permissions:
 ### Interactive API Docs
 
 When running locally, visit:
+
 - **Swagger UI:** `http://localhost:8000/docs`
 - **ReDoc:** `http://localhost:8000/redoc`
 
@@ -689,30 +709,30 @@ When running locally, visit:
 
 #### Health & Status
 
-| Method | Endpoint | Description | Response |
-|--------|----------|-------------|----------|
-| `GET` | `/` | Root health check | `{"status": "healthy"}` |
-| `GET` | `/api/health` | Detailed health status | Health metrics + cache stats |
-| `GET` | `/api/riot/cache/stats` | Cache performance statistics | Hit rate, size, entries |
+| Method | Endpoint                | Description                  | Response                     |
+| ------ | ----------------------- | ---------------------------- | ---------------------------- |
+| `GET`  | `/`                     | Root health check            | `{"status": "healthy"}`      |
+| `GET`  | `/api/health`           | Detailed health status       | Health metrics + cache stats |
+| `GET`  | `/api/riot/cache/stats` | Cache performance statistics | Hit rate, size, entries      |
 
 #### Riot API Integration
 
-| Method | Endpoint | Description | Parameters |
-|--------|----------|-------------|------------|
-| `POST` | `/api/riot/validate` | Validate Riot ID format | `{"riotId": "username#tag", "region": "europe"}` |
-| `GET` | `/api/riot/matches/{riotId}` | Get match history | Query: `region`, `queue`, `count` |
-| `GET` | `/api/riot/match/{matchId}` | Get detailed match data | Path: `matchId` |
-| `GET` | `/api/riot/ranked/{riotId}` | Get ranked statistics | Query: `region` |
-| `GET` | `/api/riot/summoner/{riotId}` | Get summoner profile | Query: `region` |
+| Method | Endpoint                      | Description             | Parameters                                       |
+| ------ | ----------------------------- | ----------------------- | ------------------------------------------------ |
+| `POST` | `/api/riot/validate`          | Validate Riot ID format | `{"riotId": "username#tag", "region": "europe"}` |
+| `GET`  | `/api/riot/matches/{riotId}`  | Get match history       | Query: `region`, `queue`, `count`                |
+| `GET`  | `/api/riot/match/{matchId}`   | Get detailed match data | Path: `matchId`                                  |
+| `GET`  | `/api/riot/ranked/{riotId}`   | Get ranked statistics   | Query: `region`                                  |
+| `GET`  | `/api/riot/summoner/{riotId}` | Get summoner profile    | Query: `region`                                  |
 
 #### AI Analysis
 
-| Method | Endpoint | Description | Request Body |
-|--------|----------|-------------|--------------|
-| `POST` | `/api/analysis/performance` | Analyze match performance | `{"matchId": "...", "riotId": "..."}` |
-| `POST` | `/api/analysis/champion` | Get champion advice | `{"championName": "...", "role": "..."}` |
-| `POST` | `/api/analysis/compare` | Compare two players | `{"riotId1": "...", "riotId2": "..."}` |
-| `POST` | `/api/chat` | AI chat interface | `{"message": "...", "context": {...}}` |
+| Method | Endpoint                    | Description               | Request Body                             |
+| ------ | --------------------------- | ------------------------- | ---------------------------------------- |
+| `POST` | `/api/analysis/performance` | Analyze match performance | `{"matchId": "...", "riotId": "..."}`    |
+| `POST` | `/api/analysis/champion`    | Get champion advice       | `{"championName": "...", "role": "..."}` |
+| `POST` | `/api/analysis/compare`     | Compare two players       | `{"riotId1": "...", "riotId2": "..."}`   |
+| `POST` | `/api/chat`                 | AI chat interface         | `{"message": "...", "context": {...}}`   |
 
 ### Example Requests
 
@@ -839,24 +859,24 @@ npm run build
 
 ### Backend Performance
 
-| Metric | Target | Actual |
-|--------|--------|--------|
-| **Cache Hit Rate** | > 70% | **80%+** ✅ |
-| **API Call Reduction** | > 40% | **50%+** ✅ |
-| **Response Time (cached)** | < 50ms | **< 10ms** ✅ |
-| **Response Time (uncached)** | < 1s | **200-500ms** ✅ |
-| **Lambda Cold Start** | < 3s | **~2s** ✅ |
-| **Lambda Warm Response** | < 500ms | **~200ms** ✅ |
+| Metric                       | Target  | Actual           |
+| ---------------------------- | ------- | ---------------- |
+| **Cache Hit Rate**           | > 70%   | **80%+** ✅      |
+| **API Call Reduction**       | > 40%   | **50%+** ✅      |
+| **Response Time (cached)**   | < 50ms  | **< 10ms** ✅    |
+| **Response Time (uncached)** | < 1s    | **200-500ms** ✅ |
+| **Lambda Cold Start**        | < 3s    | **~2s** ✅       |
+| **Lambda Warm Response**     | < 500ms | **~200ms** ✅    |
 
 ### Frontend Performance
 
-| Metric | Target | Actual |
-|--------|--------|--------|
-| **Time to First Content** | < 3s | **1-2s** ✅ |
-| **Tab Switch Time** | < 100ms | **Instant (0ms)** ✅ |
-| **Dashboard Load** | < 2s | **1-2s** ✅ |
-| **Bundle Size** | < 500KB | **~400KB** ✅ |
-| **Lighthouse Score** | > 90 | **92** ✅ |
+| Metric                    | Target  | Actual               |
+| ------------------------- | ------- | -------------------- |
+| **Time to First Content** | < 3s    | **1-2s** ✅          |
+| **Tab Switch Time**       | < 100ms | **Instant (0ms)** ✅ |
+| **Dashboard Load**        | < 2s    | **1-2s** ✅          |
+| **Bundle Size**           | < 500KB | **~400KB** ✅        |
+| **Lighthouse Score**      | > 90    | **92** ✅            |
 
 ### Optimization Strategies
 
@@ -959,6 +979,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 **Symptoms:** Frontend can't connect to backend, browser console shows CORS errors
 
 **Solutions:**
+
 1. Verify Lambda Function URL CORS is **disabled** (we handle CORS in FastAPI)
 2. Check `ALLOWED_ORIGINS` environment variable includes your frontend URL
 3. Ensure no trailing slashes in URLs
@@ -972,6 +993,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 **Symptoms:** Lambda function fails with `ModuleNotFoundError`
 
 **Solutions:**
+
 1. Use Docker deployment for Linux-compatible dependencies:
    ```powershell
    .\deploy-backend.ps1 -UseDocker -CleanBuild
@@ -984,6 +1006,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 **Symptoms:** 429 errors, "Rate limit exceeded" messages
 
 **Solutions:**
+
 - Backend automatically handles rate limiting with 1.2s delays
 - Check cache is working: `GET /api/riot/cache/stats`
 - Verify cache hit rate is > 70%
@@ -994,6 +1017,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 **Symptoms:** 403 errors when calling AI agents
 
 **Solutions:**
+
 1. Verify IAM role has Bedrock permissions
 2. Check model ID is correct for your region
 3. Ensure Bedrock model access is enabled in AWS console
@@ -1004,6 +1028,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 **Symptoms:** `npm run build` fails with TypeScript errors
 
 **Solutions:**
+
 1. Clear node_modules and reinstall:
    ```powershell
    Remove-Item -Recurse -Force node_modules
@@ -1017,6 +1042,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 **Symptoms:** Dashboard shows loading state indefinitely
 
 **Solutions:**
+
 1. Check browser console for errors
 2. Verify API endpoint is correct in `.env`
 3. Test backend health: `curl YOUR_API_URL/api/health`
@@ -1045,14 +1071,14 @@ LOG_LEVEL=DEBUG python main.py
 
 ```javascript
 // Enable debug mode in browser console
-localStorage.setItem('debug', 'true')
+localStorage.setItem("debug", "true");
 
 // Check API calls
 // Open Network tab in DevTools
 
 // Check stored data
-console.log(localStorage.getItem('userProfile'))
-console.log(localStorage.getItem('matchHistory'))
+console.log(localStorage.getItem("userProfile"));
+console.log(localStorage.getItem("matchHistory"));
 ```
 
 ### Getting Help
@@ -1069,15 +1095,15 @@ console.log(localStorage.getItem('matchHistory'))
 
 ### AWS Services Monthly Cost (Light Usage)
 
-| Service | Usage | Estimated Cost |
-|---------|-------|----------------|
-| **AWS Lambda** | ~100K requests/month | ~$0.20 |
-| **AWS Amplify** | Hosting + 10GB bandwidth | ~$1.00 |
-| **Amazon Bedrock** | ~50K tokens/month | ~$0.15 |
-| **S3** | Knowledge base storage | ~$0.50 |
-| **CloudWatch Logs** | 1GB logs/month | ~$0.50 |
-| **Data Transfer** | Minimal | ~$0.50 |
-| **Total** | | **~$2.85/month** |
+| Service             | Usage                    | Estimated Cost   |
+| ------------------- | ------------------------ | ---------------- |
+| **AWS Lambda**      | ~100K requests/month     | ~$0.20           |
+| **AWS Amplify**     | Hosting + 10GB bandwidth | ~$1.00           |
+| **Amazon Bedrock**  | ~50K tokens/month        | ~$0.15           |
+| **S3**              | Knowledge base storage   | ~$0.50           |
+| **CloudWatch Logs** | 1GB logs/month           | ~$0.50           |
+| **Data Transfer**   | Minimal                  | ~$0.50           |
+| **Total**           |                          | **~$2.85/month** |
 
 ### Cost Optimization Tips
 
@@ -1211,7 +1237,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 **Project:** RuneSight - AI-Powered League of Legends Analytics  
 **Hackathon:** AWS Rift Rewind  
 **Category:** Gaming Analytics & AI  
-**Built with:** AWS Amplify, Lambda, Bedrock, Strands Agents  
+**Built with:** AWS Amplify, Lambda, Bedrock, Strands Agents
 
 ### Key Achievements
 
@@ -1220,7 +1246,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ✅ Real-time match analytics with smart caching  
 ✅ Beautiful, responsive UI with dark/light mode  
 ✅ 80%+ cache hit rate for optimal performance  
-✅ Comprehensive documentation and deployment guides  
+✅ Comprehensive documentation and deployment guides
 
 ---
 
@@ -1228,7 +1254,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Built with ❤️ for the League of Legends community**
 
-*RuneSight - See beyond the Rift*
+_RuneSight - See beyond the Rift_
 
 🎮 **[Try it now](https://main.d2nnbamo017p3o.amplifyapp.com/)** 🎮
 
